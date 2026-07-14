@@ -100,7 +100,7 @@ export function WheelChart({
     color: string;
   } | null>(null);
 
-  const cx = 250;
+  const cx = 310;
   const cy = 250;
   const rInner = 45;
   const rOuter = 185;
@@ -174,8 +174,8 @@ export function WheelChart({
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
 
-    // Scale mouse coordinates to match the 500x500 viewBox
-    const svgX = (mouseX / rect.width) * 500;
+    // Scale mouse coordinates to match the 620x500 viewBox
+    const svgX = (mouseX / rect.width) * 620;
     const svgY = (mouseY / rect.height) * 500;
 
     // Distance from center
@@ -261,8 +261,8 @@ export function WheelChart({
     // Wheel dimensions on Canvas
     const ccx = 480;
     const ccy = 630;
-    const crInner = 100;
-    const crOuter = 380;
+    const crInner = 80;
+    const crOuter = 315;
     const crStep = (crOuter - crInner) / 10;
 
     // Draw concentric rings with grid scores
@@ -317,7 +317,7 @@ export function WheelChart({
 
       // Draw Labels on the outer ring with correct orientation/anchor
       const midRad = startRad + angleStep / 2;
-      const labelRadius = crOuter + 30;
+      const labelRadius = crOuter + 25;
       const lx = ccx + labelRadius * Math.cos(midRad);
       const ly = ccy + labelRadius * Math.sin(midRad);
 
@@ -345,7 +345,7 @@ export function WheelChart({
       ctx.fillStyle = "#FFFFFF";
       ctx.font = "bold 12px Inter, sans-serif";
       ctx.textAlign = "center";
-      const numRadius = crInner + 25;
+      const numRadius = crInner + 20;
       ctx.fillText(
         (idx + 1).toString(),
         ccx + numRadius * Math.cos(midRad),
@@ -545,11 +545,11 @@ export function WheelChart({
         </div>
       </div>
 
-      <div className="relative flex justify-center items-center w-full max-w-[450px]">
+      <div className="relative flex justify-center items-center w-full max-w-[500px]">
         {/* Main SVG Chart */}
         <svg
           ref={svgRef}
-          viewBox="0 0 500 500"
+          viewBox="0 0 620 500"
           className="w-full h-auto drop-shadow-[0_0_25px_rgba(197,160,89,0.05)] select-none"
         >
           {/* Faint Grid concentric rings for scoring levels 1-10 */}

@@ -1,20 +1,68 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Карьерный Компас (Career Wheel)
 
-# Run and deploy your AI Studio app
+Интерактивное веб-приложение для оценки карьерного баланса по методике «Колесо баланса». Позволяет анализировать сферы профессиональной деятельности, настраивать цветовую палитру под личные зоны комфорта, вести историю замеров и экспортировать результаты в качественные форматы PNG и PDF.
 
-This contains everything you need to run your app locally.
+## 🚀 Как запустить проект локально
 
-View your app in AI Studio: https://ai.studio/apps/97c5f298-e90b-4734-b056-2c002db307a7
+### 1. Установка зависимостей
+Убедитесь, что у вас установлена Node.js (рекомендуется v18+). Скачайте проект и установите необходимые пакеты:
+```bash
+npm install
+```
 
-## Run Locally
+### 2. Запуск сервера разработки
+Для локального запуска приложения в режиме реального времени:
+```bash
+npm run dev
+```
+После запуска проект будет доступен по адресу: `http://localhost:3000`
 
-**Prerequisites:**  Node.js
+### 3. Сборка для публикации (Production)
+Для компиляции оптимизированных файлов проекта в папку `dist`:
+```bash
+npm run build
+```
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🌐 Как опубликовать сайт на GitHub Pages
+
+Чтобы ваше Карьерное Колесо было доступно как общедоступный сайт на GitHub, выполните следующие шаги:
+
+### Шаг 1. Настройка базового пути в `vite.config.ts`
+Откройте файл `vite.config.ts` и добавьте свойство `base`, соответствующее названию вашего репозитория на GitHub:
+```typescript
+export default defineConfig(() => {
+  return {
+    base: '/название-вашего-репозитория/', // Добавьте эту строку
+    plugins: [react(), tailwindcss()],
+    // ... остальные настройки
+  };
+});
+```
+
+### Шаг 2. Установка пакета `gh-pages`
+Установите пакет, который автоматически опубликует собранную версию сайта на GitHub:
+```bash
+npm install gh-pages --save-dev
+```
+
+### Шаг 3. Добавление скриптов в `package.json`
+В файле `package.json` внутри блока `"scripts"` добавьте две команды:
+```json
+"scripts": {
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d dist",
+  "dev": "vite --port=3000 --host=0.0.0.0",
+  "build": "vite build",
+  ...
+}
+```
+
+### Шаг 4. Публикация сайта
+Выполните следующую команду в терминале:
+```bash
+npm run deploy
+```
+GitHub Pages автоматически разместит ваш сайт по адресу:
+`https://имя_пользователя.github.io/название-вашего-репозитория/`

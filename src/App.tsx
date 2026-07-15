@@ -8,6 +8,7 @@ import { Criterion, SavedWheel, User } from "./types";
 import { Auth } from "./components/Auth";
 import { WheelChart } from "./components/WheelChart";
 import { WheelEditor } from "./components/WheelEditor";
+import { CareerPlan } from "./components/CareerPlan";
 import { History } from "./components/History";
 import { Language, TRANSLATIONS } from "./translations";
 import {
@@ -319,9 +320,6 @@ export default function App() {
                   isDark ? "text-white" : "text-zinc-900"
                 }`}>
                   {t.title}
-                  <span className="rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20 px-2 py-0.5 text-[9px] font-bold text-[#DFC182] uppercase tracking-wide font-mono">
-                    SPA
-                  </span>
                 </h1>
                 <p className={`hidden text-xs sm:block tracking-wider font-light ${
                   isDark ? "text-white/40" : "text-zinc-500"
@@ -707,6 +705,16 @@ export default function App() {
                 </div>
 
               </div>
+
+              {/* Individual Career Development Plan Section (IDP) */}
+              <CareerPlan
+                criteria={criteria}
+                onChangeCriteria={setCriteria}
+                lang={lang}
+                theme={theme}
+                activeUsername={currentUser ? currentUser.username : undefined}
+                activeWheelTitle={wheelTitle}
+              />
 
               {/* Bottom Row: History Timeline (Full Width) */}
               <div className={`border-t pt-8 ${isDark ? "border-white/5" : "border-zinc-200"}`}>

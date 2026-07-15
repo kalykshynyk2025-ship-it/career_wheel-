@@ -148,13 +148,13 @@ export function WheelEditor({
         }`}>
           {t.addCustomLabel}
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newCriterionName}
             onChange={(e) => setNewCriterionName(e.target.value)}
             placeholder={t.addCustomPlaceholder}
-            className={`flex-1 rounded-xl border px-4 py-2 text-sm outline-none transition ${
+            className={`flex-1 rounded-xl border px-4 py-2 text-xs sm:text-sm outline-none transition min-w-0 ${
               isDark 
                 ? "border-white/10 bg-[#0D0D0F] text-white placeholder:text-white/20 focus:border-[#C5A059] focus:bg-[#0A0A0B]" 
                 : "border-zinc-200 bg-zinc-50 text-zinc-800 placeholder:text-zinc-400 focus:border-[#C5A059] focus:bg-white"
@@ -162,7 +162,7 @@ export function WheelEditor({
           />
           <button
             type="submit"
-            className="flex items-center gap-1.5 rounded-xl bg-[#C5A059] px-4 py-2 text-sm font-bold text-[#0A0A0B] hover:bg-[#DFC182] active:scale-95 transition cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-1.5 rounded-xl bg-[#C5A059] px-4 py-2 text-xs sm:text-sm font-bold text-[#0A0A0B] hover:bg-[#DFC182] active:scale-95 transition cursor-pointer shrink-0 w-full sm:w-auto"
           >
             <Plus className="h-4 w-4" /> {t.addButton}
           </button>

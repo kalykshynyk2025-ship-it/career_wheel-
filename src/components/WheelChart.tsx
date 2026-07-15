@@ -452,15 +452,185 @@ export function WheelChart({
       ctx.fillStyle = "#4A0404";
       ctx.font = "14px Inter, sans-serif";
       const labelCompDesc = lang === "en" ? "Shown on the chart as a dotted golden line" : lang === "chm" ? "Колесошто оранжевый пунктир линий дене ончыктымо" : lang === "sah" ? "Эргимтэҕэ оранжевай сурааһынынан көрдөрүлүннэ" : "Отображено на диаграмме оранжевой пунктирной линией";
-      ctx.fillText(labelCompDesc, tx + 15, ty + 46);
+      ctx.fillText(labelCompDesc, tx + 15, ty + 45);
     }
 
-    // Footnote
-    ctx.fillStyle = "#94A3B8";
-    ctx.font = "12px Inter, sans-serif";
-    ctx.fillText(`${t.title} — ${t.subtitle}`, 70, 1040);
-    ctx.textAlign = "right";
-    ctx.fillText("Generated locally and privately by AI Studio", 1430, 1040);
+    return canvas;
+  };
+
+  // Standalone high-quality canvas rendering engine for the plan matrix
+  const drawPlanCanvas = (): HTMLCanvasElement => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1500;
+    canvas.height = 1100;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return canvas;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Golden header line
+    ctx.fillStyle = "#C5A059";
+    ctx.fillRect(0, 0, canvas.width, 15);
+
+    // Header title block
+    ctx.fillStyle = "#1E293B";
+    ctx.font = "bold 32px Inter, system-ui, sans-serif";
+    ctx.fillText(t.careerPlanTitle.toUpperCase(), 70, 90);
+
+    ctx.fillStyle = "#64748B";
+    ctx.font = "500 18px Inter, system-ui, sans-serif";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const dateStr = new Date().toLocaleDateString(localeStr, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    
+    ctx.fillText(`${t.userLabel}: ${activeUsername}  |  Date: ${dateStr}`, 70, 130);
+
+    // Elegant separator line
+    ctx.strokeStyle = "#F1F5F9";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(70, 160);
+    ctx.lineTo(1430, 160);
+    ctx.stroke();
+
+    const startX = 70;
+    const startY = 195;
+    const cardWidth = 660;
+    const cardHeight = 185;
+    const colGap = 40;
+    const rowGap = 20;
+
+    const GET_STRATEGY = (score: number, target: number, l: Language): { text: string } => {
+      const trans = TRANSLATIONS[l];
+      if (target > score) {
+        return { text: trans.strategyGrowth };
+      } else if (target < score) {
+        return { text: trans.strategyOptimization };
+      } else {
+        return { text: trans.strategyMaintain };
+      }
+    };
+
+    criteria.forEach((crit, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = startX + col * (cardWidth + colGap);
+      const y = startY + row * (cardHeight + rowGap);
+
+      if (y + cardHeight > 1020) return;
+
+      // Card Background with fine stroke
+      ctx.fillStyle = "#F8FAFC";
+      ctx.fillRect(x, y, cardWidth, cardHeight);
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, cardWidth, cardHeight);
+
+      // Gold highlight
+      ctx.fillStyle = "#C5A059";
+      ctx.fillRect(x, y, 6, cardHeight);
+
+      // Sphere counter badge
+      ctx.fillStyle = "#1E293B";
+      ctx.beginPath();
+      ctx.arc(x + 35, y + 35, 15, 0, 2 * Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 13px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText((i + 1).toString(), x + 35, y + 39);
+      ctx.textAlign = "left";
+
+      // Sphere Title
+      ctx.fillStyle = "#1E293B";
+      ctx.font = "bold 16px Inter, sans-serif";
+      let nameText = crit.name;
+      const maxNameWidth = 400;
+      if (ctx.measureText(nameText).width > maxNameWidth) {
+        while (ctx.measureText(nameText + "...").width > maxNameWidth && nameText.length > 0) {
+          nameText = nameText.substring(0, nameText.length - 1);
+        }
+        nameText = nameText + "...";
+      }
+      ctx.fillText(nameText, x + 65, y + 41);
+
+      // Scores (Now -> Target)
+      ctx.fillStyle = "#475569";
+      ctx.font = "bold 13px Inter, monospace";
+      const targetVal = crit.targetScore ?? crit.score;
+      const progressLabel = `${crit.score} → ${targetVal}`;
+      ctx.fillText(progressLabel, x + cardWidth - 80, y + 40);
+
+      // Strategy Label
+      const strategy = GET_STRATEGY(crit.score, targetVal, lang);
+      let strategyColor = "#C5A059";
+      if (targetVal > crit.score) {
+        strategyColor = "#10B981";
+      } else if (targetVal < crit.score) {
+        strategyColor = "#F59E0B";
+      } else {
+        strategyColor = "#475569";
+      }
+
+      ctx.fillStyle = strategyColor;
+      ctx.fillRect(x + 65, y + 54, 130, 18);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 8px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(strategy.text.toUpperCase(), x + 65 + 65, y + 66);
+      ctx.textAlign = "left";
+
+      // Inner thin divider
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 20, y + 80);
+      ctx.lineTo(x + cardWidth - 20, y + 80);
+      ctx.stroke();
+
+      // Render actual steps
+      const steps = crit.steps || [];
+      const hasSteps = steps.some(s => s.trim() !== "");
+
+      if (!hasSteps) {
+        ctx.fillStyle = "#94A3B8";
+        ctx.font = "italic 12px Inter, sans-serif";
+        const emptyPlanStr = lang === "en" ? "No development action steps set for this sphere yet." : "Шаги развития для данной сферы пока не заполнены.";
+        ctx.fillText(emptyPlanStr, x + 35, y + 130);
+      } else {
+        let stepCount = 0;
+        steps.forEach((step, sIdx) => {
+          if (step.trim() && stepCount < 4) {
+            const stepY = y + 101 + stepCount * 20;
+            ctx.fillStyle = "#C5A059";
+            ctx.font = "bold 12px Inter, sans-serif";
+            ctx.fillText(`•`, x + 30, stepY);
+            ctx.fillStyle = "#334155";
+            ctx.font = "500 12px Inter, sans-serif";
+            
+            let sText = step;
+            const maxStepWidth = cardWidth - 75;
+            if (ctx.measureText(sText).width > maxStepWidth) {
+              while (ctx.measureText(sText + "...").width > maxStepWidth && sText.length > 0) {
+                sText = sText.substring(0, sText.length - 1);
+              }
+              sText = sText + "...";
+            }
+            ctx.fillText(sText, x + 45, stepY);
+            stepCount++;
+          }
+        });
+      }
+    });
 
     return canvas;
   };
@@ -472,6 +642,17 @@ export function WheelChart({
     const link = document.createElement("a");
     const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
     link.download = `career_wheel_${sanitizedTitle}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
+  // Trigger Local PNG Export for Development Plan
+  const exportPlanPNG = () => {
+    const canvas = drawPlanCanvas();
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
+    link.download = `career_development_plan_${sanitizedTitle}.png`;
     link.href = dataUrl;
     link.click();
   };
@@ -488,7 +669,19 @@ export function WheelChart({
       format: [1500, 1100],
     });
 
+    // Add Page 1
     pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
+
+    // Add Page 2 (Plan Matrix)
+    try {
+      const planCanvas = drawPlanCanvas();
+      const planDataUrl = planCanvas.toDataURL("image/jpeg", 0.95);
+      pdf.addPage([1500, 1100], "landscape");
+      pdf.addImage(planDataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
+    } catch (err) {
+      console.error("Error adding career plan page to PDF:", err);
+    }
+
     const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
     pdf.save(`career_audit_report_${sanitizedTitle}.pdf`);
   };
@@ -519,7 +712,7 @@ export function WheelChart({
         </div>
         
         {/* Export Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-end">
           <button
             onClick={exportPNG}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${

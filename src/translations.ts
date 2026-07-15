@@ -103,6 +103,22 @@ export interface TranslationStrings {
   colorResetBtn: string;
   colorModeDesc: string;
   colorActivePaletteLabel: string;
+  careerPlanTitle: string;
+  careerPlanDesc: string;
+  careerPlanEmpty: string;
+  careerPlanSetTarget: string;
+  careerPlanAutoGen: string;
+  careerPlanStepsHeader: string;
+  careerPlanSummaryHeader: string;
+  careerPlanMatrixTitle: string;
+  careerPlanNoSteps: string;
+  careerPlanStepsActive: string;
+  careerPlanAdviceHeader: string;
+  careerPlanAdviceText: string;
+  careerPlanSavePngBtn: string;
+  strategyGrowth: string;
+  strategyOptimization: string;
+  strategyMaintain: string;
 }
 
 export const TRANSLATIONS: Record<Language, TranslationStrings> = {
@@ -204,6 +220,22 @@ export const TRANSLATIONS: Record<Language, TranslationStrings> = {
     colorResetBtn: "Сбросить цвета",
     colorModeDesc: "В режиме бальной системы цвет сегментов меняется в зависимости от поставленной оценки (1-3, 4-6, 7-8, 9-10). Вы можете настроить эти цвета ниже.",
     colorActivePaletteLabel: "Редактировать цвета",
+    careerPlanTitle: "Индивидуальный план развития карьерных критериев",
+    careerPlanDesc: "Установите целевые показатели, распишите конкретные шаги и используйте автогенератор профессиональных рекомендаций.",
+    careerPlanEmpty: "Пожалуйста, добавьте карьерные сферы в редакторе выше, чтобы построить план развития!",
+    careerPlanSetTarget: "Выставить целевой балл (1-10)",
+    careerPlanAutoGen: "Сгенерировать шаги",
+    careerPlanStepsHeader: "Пошаговый план развития сферы",
+    careerPlanSummaryHeader: "Сводная таблица целей развития",
+    careerPlanMatrixTitle: "Матрица целей развития",
+    careerPlanNoSteps: "Шаги не прописаны",
+    careerPlanStepsActive: "шагов заполнено",
+    careerPlanAdviceHeader: "Совет карьерного консультанта",
+    careerPlanAdviceText: "Для получения готовых рекомендаций нажмите кнопку «Сгенерировать шаги» в любой сфере, а затем отрегулируйте их под свою реальность. При выгрузке отчета ваши цели и шаги будут полностью учтены!",
+    careerPlanSavePngBtn: "Сохранить PNG План",
+    strategyGrowth: "РОСТ",
+    strategyOptimization: "ОПТИМИЗАЦИЯ",
+    strategyMaintain: "ПОДДЕРЖАНИЕ",
   },
   chm: {
     title: "Карьер компас",
@@ -303,6 +335,22 @@ export const TRANSLATIONS: Record<Language, TranslationStrings> = {
     colorResetBtn: "Тӱс-влакым шулыкаш",
     colorModeDesc: "Балл системе режимыште сегмент тӱс шындалыме балл дене вашталтеш (1-3, 4-6, 7-8, 9-10). Тый тиде тӱс-влакым кӱшнӧ тӧрлатен кертат.",
     colorActivePaletteLabel: "Тӱс-влакым тӧрлатымаш",
+    careerPlanTitle: "Ик карьер кушмо план",
+    careerPlanDesc: "Целевой баллым шындалыза, ошкыл-влакым возыза да автогенератор каҥашым кучылтза.",
+    careerPlanEmpty: "Пожалуйста, кӱшнӧ шаблон-влакым ойырыза але паша сфер-влакым ушныза, кушмо планым возаш манын!",
+    careerPlanSetTarget: "Целевой баллым шындаш (1-10)",
+    careerPlanAutoGen: "Ошкыл-влакым возаш",
+    careerPlanStepsHeader: "Сферым вияҥдыме ошкыл-влак",
+    careerPlanSummaryHeader: "Кушмо нерген таблице",
+    careerPlanMatrixTitle: "Вияҥмаш цель матрице",
+    careerPlanNoSteps: "Ошкыл-влак возымо огытыл",
+    careerPlanStepsActive: "ошкыл темыме",
+    careerPlanAdviceHeader: "Карьер консультант каҥаш",
+    careerPlanAdviceText: "Ямдылык каҥашым налаш манын, «Ошкыл-влакым возаш» кнопкалан темдалза, а вара шоке илыш дене тӧрлатыза. Экспорт годым чыла палемдымаш-влак аралалтыт!",
+    careerPlanSavePngBtn: "План PNG аралаш",
+    strategyGrowth: "ВИЯҤМАШ",
+    strategyOptimization: "ТӦРЛАТЫМАШ",
+    strategyMaintain: "КУЧЫМАШ",
   },
   sah: {
     title: "Карьера компаһа",
@@ -402,6 +450,22 @@ export const TRANSLATIONS: Record<Language, TranslationStrings> = {
     colorResetBtn: "Өҥнөрүн сордоноо",
     colorModeDesc: "Баал систиэмэтин режима эргимтэ аҥардарын өҥө туруоруллубут сыанабылтан уларыйар (1-3, 4-6, 7-8, 9-10). Бу өҥнөрү аллара уларытыаххын сөп.",
     colorActivePaletteLabel: "Өҥнөрүн уларытыы",
+    careerPlanTitle: "Карьера сайдыытын былаана",
+    careerPlanDesc: "Сыал буолбут бааллары туруоруҥ, хаамыылары суруйуҥ уонна коуч субэтин автогенераторын туһаныҥ.",
+    careerPlanEmpty: "Былааны оҥорорго үөһээ баар редакторга карьера хайысхаларын эбиҥ!",
+    careerPlanSetTarget: "Сыал баалы туруоруу (1-10)",
+    careerPlanAutoGen: "Хаамыылары оҥор",
+    careerPlanStepsHeader: "Хайысханы сайыннарар хаамыылар",
+    careerPlanSummaryHeader: "Былаан түмүк таблицата",
+    careerPlanMatrixTitle: "Былаан сыалын матрицата",
+    careerPlanNoSteps: "Хаамыылар сурулла иликтэр",
+    careerPlanStepsActive: "хаамыы толорулунна",
+    careerPlanAdviceHeader: "Карьера консультанын субэтэ",
+    careerPlanAdviceText: "Бэлэм субэлэри ыларга «Хаамыылары оҥор» кнопкани баттааҥ, онтон бэйэҕит олоххутугар сөп түбэһиннэриҥ. Экспорттаатахха былаан барыта киириэҕэ!",
+    careerPlanSavePngBtn: "Былаан PNG уур",
+    strategyGrowth: "САЙДЫЫ",
+    strategyOptimization: "УЛАРЫТЫЫ",
+    strategyMaintain: "ТИРЭХТЭЭХ",
   },
   en: {
     title: "Career Compass",
@@ -501,6 +565,22 @@ export const TRANSLATIONS: Record<Language, TranslationStrings> = {
     colorResetBtn: "Reset Colors",
     colorModeDesc: "In 'By Score Value' mode, segment colors reflect their current rating (1-3, 4-6, 7-8, 9-10). You can customize these colors below.",
     colorActivePaletteLabel: "Customize Colors",
+    careerPlanTitle: "Individual Career Development Plan",
+    careerPlanDesc: "Define target scores, build action steps, and auto-generate recommendations based on coaching methodology.",
+    careerPlanEmpty: "Please add career spheres in the editor above to build a development plan!",
+    careerPlanSetTarget: "Set Target Level (1-10)",
+    careerPlanAutoGen: "Auto-Generate Plan",
+    careerPlanStepsHeader: "Action Steps for Achievement",
+    careerPlanSummaryHeader: "Summary Plan Overview",
+    careerPlanMatrixTitle: "Active Targets Matrix",
+    careerPlanNoSteps: "No steps yet",
+    careerPlanStepsActive: "steps active",
+    careerPlanAdviceHeader: "Coaching Advice",
+    careerPlanAdviceText: "Click the button in any card to auto-generate standard coaching recommendations, then adjust them dynamically under your current reality. When exporting PDF or PNG, your career plans will be elegantly rendered.",
+    careerPlanSavePngBtn: "Save Plan PNG",
+    strategyGrowth: "GROWTH",
+    strategyOptimization: "OPTIMIZE",
+    strategyMaintain: "MAINTAIN",
   }
 };
 

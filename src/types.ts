@@ -8,6 +8,8 @@ export interface Criterion {
   name: string;
   score: number; // 1 to 10
   notes?: string; // custom observations, goals, or notes
+  targetScore?: number; // 1 to 10
+  steps?: string[]; // array of 4 steps
 }
 
 export interface SavedWheel {

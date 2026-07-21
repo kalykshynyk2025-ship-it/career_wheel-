@@ -30,6 +30,43 @@ interface CareerPlanProps {
   activeWheelTitle?: string;
 }
 
+const PALETTE = [
+  "#C5A059", // Signature Gold
+  "#DFC182", // Champagne
+  "#9E8047", // Antique Brass
+  "#BCA068", // Muted Gold
+  "#E5C17D", // Golden Sand
+  "#8A6D3B", // Bronze
+  "#A38A5E", // Vintage Gold
+  "#D4AF37", // Metallic Gold
+  "#C3B091", // Khaki Gold
+  "#B38B41", // Dark Ochre
+];
+
+const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians)
+  };
+};
+
+const getWedgePath = (cx: number, cy: number, startDeg: number, endDeg: number, innerR: number, outerR: number) => {
+  const startOuter = polarToCartesian(cx, cy, outerR, startDeg);
+  const endOuter = polarToCartesian(cx, cy, outerR, endDeg);
+  const startInner = polarToCartesian(cx, cy, innerR, startDeg);
+  const endInner = polarToCartesian(cx, cy, innerR, endDeg);
+  const largeArcFlag = endDeg - startDeg <= 180 ? "0" : "1";
+  return [
+    `M ${startInner.x} ${startInner.y}`,
+    `L ${startOuter.x} ${startOuter.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArcFlag} 1 ${endOuter.x} ${endOuter.y}`,
+    `L ${endInner.x} ${endInner.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArcFlag} 0 ${startInner.x} ${startInner.y}`,
+    "Z"
+  ].join(" ");
+};
+
 const GET_STRATEGY = (score: number, target: number, lang: Language): { text: string; colorClass: string } => {
   const t = TRANSLATIONS[lang];
   if (target > score) {
@@ -90,7 +127,7 @@ export function CareerPlan({
   const drawPlanCanvas = (): HTMLCanvasElement => {
     const canvas = document.createElement("canvas");
     canvas.width = 1500;
-    canvas.height = 1100;
+    canvas.height = 1600;
     const ctx = canvas.getContext("2d");
     if (!ctx) return canvas;
 
@@ -249,12 +286,110 @@ export function CareerPlan({
       }
     });
 
+    // Draw a divider line above the wheels
+    ctx.strokeStyle = "#E2E8F0";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(70, 1020);
+    ctx.lineTo(1430, 1020);
+    ctx.stroke();
+
+    // Wheel Title Headers
+    ctx.fillStyle = "#1E293B";
+    ctx.font = "bold 20px Inter, sans-serif";
+    ctx.textAlign = "center";
+    
+    const currentWheelLabel = lang === "en" ? "CURRENT BALANCE" : lang === "chm" ? "КЫЗЫТСЕ БАЛАНС" : lang === "sah" ? "БИЛИҤҤИ ТЭҤНЭҺИК" : "ТЕКУЩИЙ БАЛАНС";
+    const targetWheelLabel = lang === "en" ? "TARGET GROWTH GOALS" : lang === "chm" ? "ВИЯҤМАШ ЦЕЛЬ-ВЛАК" : lang === "sah" ? "САЙДЫЫ СЫАЛЛАРА" : "ЦЕЛЕВОЙ РОСТ И ПЛАНЫ";
+    
+    ctx.fillText(currentWheelLabel, 420, 1060);
+    ctx.fillText(targetWheelLabel, 1080, 1060);
+    ctx.textAlign = "left"; // reset
+
+    const N = criteria.length;
+    // Draw wheels!
+    const drawSingleWheelOnCanvas = (cx: number, cy: number, isTarget: boolean) => {
+      const crInner = 50;
+      const crOuter = 160;
+      const crStep = (crOuter - crInner) / 10;
+
+      // Concentric rings
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 1;
+      for (let l = 1; l <= 10; l++) {
+        const r = crInner + l * crStep;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Label concentric ring scores
+        ctx.fillStyle = "#94A3B8";
+        ctx.font = "bold 10px Inter, monospace";
+        ctx.fillText(l.toString(), cx - 5, cy - r + 3);
+      }
+
+      // Slices
+      if (N > 0) {
+        const angleStep = (2 * Math.PI) / N;
+        criteria.forEach((crit, idx) => {
+          const score = isTarget ? (crit.targetScore ?? crit.score) : crit.score;
+          const color = PALETTE[idx % PALETTE.length];
+          const startRad = idx * angleStep - Math.PI / 2;
+          const endRad = (idx + 1) * angleStep - Math.PI / 2;
+          const valRadius = crInner + (score / 10) * (crOuter - crInner);
+
+          // Fill wedge
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadius, startRad, endRad);
+          ctx.lineTo(cx + crInner * Math.cos(endRad), cy + crInner * Math.sin(endRad));
+          ctx.arc(cx, cy, crInner, endRad, startRad, true);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Stroke wedge
+          ctx.strokeStyle = "rgba(0,0,0,0.15)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadius, startRad, endRad);
+          ctx.lineTo(cx + crInner * Math.cos(endRad), cy + crInner * Math.sin(endRad));
+          ctx.arc(cx, cy, crInner, endRad, startRad, true);
+          ctx.closePath();
+          ctx.stroke();
+
+          // Rays
+          ctx.strokeStyle = "#E2E8F0";
+          ctx.beginPath();
+          ctx.moveTo(cx + crInner * Math.cos(startRad), cy + crInner * Math.sin(startRad));
+          ctx.lineTo(cx + crOuter * Math.cos(startRad), cy + crOuter * Math.sin(startRad));
+          ctx.stroke();
+
+          // Labels (1, 2, 3...) at outer edge
+          const midRad = startRad + angleStep / 2;
+          const labelX = cx + (crOuter + 20) * Math.cos(midRad);
+          const labelY = cy + (crOuter + 20) * Math.sin(midRad);
+          
+          ctx.fillStyle = "#475569";
+          ctx.font = "bold 12px Inter, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText((idx + 1).toString(), labelX, labelY);
+        });
+      }
+    };
+
+    drawSingleWheelOnCanvas(420, 1270, false);
+    drawSingleWheelOnCanvas(1080, 1270, true);
+
     // Footnote
     ctx.fillStyle = "#94A3B8";
     ctx.font = "12px Inter, sans-serif";
-    ctx.fillText(`${t.title} — Career Development Report`, 70, 1040);
+    ctx.fillText(`${t.title} — Career Development Report`, 70, 1540);
     ctx.textAlign = "right";
-    ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1040);
+    ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1540);
 
     return canvas;
   };
@@ -318,7 +453,7 @@ export function CareerPlan({
               </span>
             </div>
 
-            <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-3 pr-1">
               {criteria.map((crit, idx) => {
                 const isExpanded = expandedId === crit.id;
                 const targetVal = crit.targetScore ?? crit.score;
@@ -500,7 +635,7 @@ export function CareerPlan({
                 </span>
               </div>
 
-              <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto custom-scrollbar">
+              <div className="divide-y divide-white/5">
                 {criteria.map((crit, idx) => {
                   const targetVal = crit.targetScore ?? crit.score;
                   const strategy = GET_STRATEGY(crit.score, targetVal, lang);

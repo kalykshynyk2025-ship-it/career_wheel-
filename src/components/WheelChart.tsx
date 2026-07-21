@@ -462,7 +462,7 @@ export function WheelChart({
   const drawPlanCanvas = (): HTMLCanvasElement => {
     const canvas = document.createElement("canvas");
     canvas.width = 1500;
-    canvas.height = 1100;
+    canvas.height = 1600;
     const ctx = canvas.getContext("2d");
     if (!ctx) return canvas;
 
@@ -632,6 +632,111 @@ export function WheelChart({
       }
     });
 
+    // Draw a divider line above the wheels
+    ctx.strokeStyle = "#E2E8F0";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(70, 1020);
+    ctx.lineTo(1430, 1020);
+    ctx.stroke();
+
+    // Wheel Title Headers
+    ctx.fillStyle = "#1E293B";
+    ctx.font = "bold 20px Inter, sans-serif";
+    ctx.textAlign = "center";
+    
+    const currentWheelLabel = lang === "en" ? "CURRENT BALANCE" : lang === "chm" ? "КЫЗЫТСЕ БАЛАНС" : lang === "sah" ? "БИЛИҤҤИ ТЭҤНЭҺИК" : "ТЕКУЩИЙ БАЛАНС";
+    const targetWheelLabel = lang === "en" ? "TARGET GROWTH GOALS" : lang === "chm" ? "ВИЯҤМАШ ЦЕЛЬ-ВЛАК" : lang === "sah" ? "САЙДЫЫ СЫАЛЛАРА" : "ЦЕЛЕВОЙ РОСТ И ПЛАНЫ";
+    
+    ctx.fillText(currentWheelLabel, 420, 1060);
+    ctx.fillText(targetWheelLabel, 1080, 1060);
+    ctx.textAlign = "left"; // reset
+
+    const N = criteria.length;
+    // Draw wheels!
+    const drawSingleWheelOnCanvas = (cx: number, cy: number, isTarget: boolean) => {
+      const crInner = 50;
+      const crOuter = 160;
+      const crStep = (crOuter - crInner) / 10;
+
+      // Concentric rings
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 1;
+      for (let l = 1; l <= 10; l++) {
+        const r = crInner + l * crStep;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Label concentric ring scores
+        ctx.fillStyle = "#94A3B8";
+        ctx.font = "bold 10px Inter, monospace";
+        ctx.fillText(l.toString(), cx - 5, cy - r + 3);
+      }
+
+      // Slices
+      if (N > 0) {
+        const angleStep = (2 * Math.PI) / N;
+        criteria.forEach((crit, idx) => {
+          const score = isTarget ? (crit.targetScore ?? crit.score) : crit.score;
+          const color = PALETTE[idx % PALETTE.length];
+          const startRad = idx * angleStep - Math.PI / 2;
+          const endRad = (idx + 1) * angleStep - Math.PI / 2;
+          const valRadius = crInner + (score / 10) * (crOuter - crInner);
+
+          // Fill wedge
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadius, startRad, endRad);
+          ctx.lineTo(cx + crInner * Math.cos(endRad), cy + crInner * Math.sin(endRad));
+          ctx.arc(cx, cy, crInner, endRad, startRad, true);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Stroke wedge
+          ctx.strokeStyle = "rgba(0,0,0,0.15)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadius, startRad, endRad);
+          ctx.lineTo(cx + crInner * Math.cos(endRad), cy + crInner * Math.sin(endRad));
+          ctx.arc(cx, cy, crInner, endRad, startRad, true);
+          ctx.closePath();
+          ctx.stroke();
+
+          // Rays
+          ctx.strokeStyle = "#E2E8F0";
+          ctx.beginPath();
+          ctx.moveTo(cx + crInner * Math.cos(startRad), cy + crInner * Math.sin(startRad));
+          ctx.lineTo(cx + crOuter * Math.cos(startRad), cy + crOuter * Math.sin(startRad));
+          ctx.stroke();
+
+          // Labels (1, 2, 3...) at outer edge
+          const midRad = startRad + angleStep / 2;
+          const labelX = cx + (crOuter + 20) * Math.cos(midRad);
+          const labelY = cy + (crOuter + 20) * Math.sin(midRad);
+          
+          ctx.fillStyle = "#475569";
+          ctx.font = "bold 12px Inter, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText((idx + 1).toString(), labelX, labelY);
+        });
+      }
+    };
+
+    drawSingleWheelOnCanvas(420, 1270, false);
+    drawSingleWheelOnCanvas(1080, 1270, true);
+
+    // Footnote
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = "12px Inter, sans-serif";
+    ctx.fillText(`${t.interactiveWheel} — Career Development Report`, 70, 1540);
+    ctx.textAlign = "right";
+    ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1540);
+
     return canvas;
   };
 
@@ -672,12 +777,12 @@ export function WheelChart({
     // Add Page 1
     pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
 
-    // Add Page 2 (Plan Matrix)
+    // Add Page 2 (Plan Matrix with Wheels)
     try {
       const planCanvas = drawPlanCanvas();
       const planDataUrl = planCanvas.toDataURL("image/jpeg", 0.95);
-      pdf.addPage([1500, 1100], "landscape");
-      pdf.addImage(planDataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
+      pdf.addPage([1500, 1600], "landscape");
+      pdf.addImage(planDataUrl, "JPEG", 0, 0, 1500, 1600, undefined, "FAST");
     } catch (err) {
       console.error("Error adding career plan page to PDF:", err);
     }
@@ -793,25 +898,34 @@ export function WheelChart({
             const isHovered = hoveredIndex === idx;
 
             return (
-              <path
-                key={`slice-${crit.id}`}
-                d={getWedgePath(startAngle, endAngle, rInner, scoreRadius)}
-                fill={color}
-                fillOpacity={isHovered ? "0.95" : "0.75"}
-                stroke={isDark ? "#0A0A0B" : "#FFFFFF"}
-                strokeWidth="1.5"
-                className="transition-all duration-200 cursor-pointer"
-                onClick={(e) => handleWedgeClick(e, idx, crit.id)}
-                onMouseEnter={(e) => {
-                  setHoveredIndex(idx);
-                  handleMouseMove(e, crit, color);
-                }}
-                onMouseMove={(e) => handleMouseMove(e, crit, color)}
-                onMouseLeave={() => {
-                  setHoveredIndex(null);
-                  setTooltip(null);
-                }}
-              />
+              <g key={`slice-group-${crit.id}`}>
+                {/* Background full-size wedge to capture clicks/hovers in empty segments */}
+                <path
+                  d={getWedgePath(startAngle, endAngle, rInner, rOuter)}
+                  fill="transparent"
+                  className="cursor-pointer"
+                  onClick={(e) => handleWedgeClick(e, idx, crit.id)}
+                  onMouseEnter={(e) => {
+                    setHoveredIndex(idx);
+                    handleMouseMove(e, crit, color);
+                  }}
+                  onMouseMove={(e) => handleMouseMove(e, crit, color)}
+                  onMouseLeave={() => {
+                    setHoveredIndex(null);
+                    setTooltip(null);
+                  }}
+                />
+                
+                {/* Colored score wedge */}
+                <path
+                  d={getWedgePath(startAngle, endAngle, rInner, scoreRadius)}
+                  fill={color}
+                  fillOpacity={isHovered ? "0.95" : "0.75"}
+                  stroke={isDark ? "#0A0A0B" : "#FFFFFF"}
+                  strokeWidth="1.5"
+                  className="transition-all duration-200 cursor-pointer pointer-events-none"
+                />
+              </g>
             );
           })}
 

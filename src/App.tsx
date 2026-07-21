@@ -9,6 +9,7 @@ import { Auth } from "./components/Auth";
 import { WheelChart } from "./components/WheelChart";
 import { WheelEditor } from "./components/WheelEditor";
 import { CareerPlan } from "./components/CareerPlan";
+import { TargetWheelCard } from "./components/TargetWheelCard";
 import { History } from "./components/History";
 import { Language, TRANSLATIONS } from "./translations";
 import {
@@ -329,16 +330,16 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               {/* Elegant Language Selector */}
-              <div className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+              <div className={`flex items-center gap-1 sm:gap-1.5 rounded-lg border px-1.5 py-1 sm:px-2.5 sm:py-1.5 text-xs font-semibold ${
                 isDark ? "border-white/10 bg-[#0D0D0F] text-white/80" : "border-zinc-200 bg-white text-zinc-700 shadow-xs"
               }`}>
                 <Globe className="h-3.5 w-3.5 text-[#C5A059]" />
                 <select
                   value={lang}
                   onChange={(e) => setLang(e.target.value as Language)}
-                  className="bg-transparent border-none outline-none text-xs font-semibold cursor-pointer focus:ring-0 pr-1 text-inherit"
+                  className="bg-transparent border-none outline-none text-[11px] sm:text-xs font-semibold cursor-pointer focus:ring-0 pr-1 text-inherit"
                 >
                   <option value="ru" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Русский</option>
                   <option value="chm" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Марий йылме</option>
@@ -354,7 +355,7 @@ export default function App() {
                   setTheme(nextTheme);
                   localStorage.setItem("career_wheel_theme", nextTheme);
                 }}
-                className={`flex items-center justify-center p-2 rounded-lg border transition active:scale-95 cursor-pointer ${
+                className={`flex items-center justify-center p-2 rounded-lg border transition active:scale-95 cursor-pointer shrink-0 ${
                   isDark 
                     ? "border-white/10 bg-[#0D0D0F] text-white/80 hover:bg-white/5" 
                     : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs"
@@ -369,19 +370,19 @@ export default function App() {
               </button>
 
               {currentUser ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
                   <div className="text-right hidden sm:block">
                     <p className={`text-[10px] font-semibold uppercase tracking-widest ${isDark ? "text-white/40" : "text-zinc-400"}`}>
                       {t.userLabel}
                     </p>
                     <p className="text-sm font-semibold text-[#DFC182]">{currentUser.username}</p>
                   </div>
-                  <div className="h-9 w-9 flex items-center justify-center rounded-full bg-[#C5A059] font-bold text-[#0A0A0B] uppercase text-sm shadow-inner">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-full bg-[#C5A059] font-bold text-[#0A0A0B] uppercase text-sm shadow-inner shrink-0">
                     {currentUser.username.charAt(0)}
                   </div>
                   <button
                     onClick={handleLogout}
-                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                    className={`flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 rounded-lg border px-2.5 sm:px-3 text-xs font-semibold transition active:scale-95 cursor-pointer shrink-0 ${
                       isDark 
                         ? "border-white/10 bg-[#0D0D0F] text-white/80 hover:border-white/20 hover:text-white" 
                         : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs"
@@ -395,7 +396,7 @@ export default function App() {
               ) : showAuth ? (
                 <button
                   onClick={() => setShowAuth(false)}
-                  className={`rounded-lg border px-4 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${
+                  className={`flex items-center justify-center h-8 sm:h-9 rounded-lg border px-3 text-xs font-semibold transition active:scale-95 cursor-pointer shrink-0 ${
                     isDark 
                       ? "border-white/10 bg-[#0D0D0F] text-white/80 hover:border-white/20 hover:text-white" 
                       : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs"
@@ -404,7 +405,7 @@ export default function App() {
                   {lang === "en" ? "Go Back" : lang === "chm" ? "Мӧҥгеш пӧртылаш" : lang === "sah" ? "Төнүн" : "Назад"}
                 </button>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className={`hidden text-xs font-semibold md:inline-flex items-center gap-1 border px-2 py-0.5 rounded-md font-mono ${
                     isDark 
                       ? "text-[#DFC182] bg-[#C5A059]/10 border-[#C5A059]/20" 
@@ -414,9 +415,10 @@ export default function App() {
                   </span>
                   <button
                     onClick={() => setShowAuth(true)}
-                    className="flex items-center gap-1.5 rounded-lg bg-[#C5A059] px-4 py-1.5 text-xs font-bold text-[#0A0A0B] shadow-lg hover:bg-[#DFC182] active:scale-95 transition cursor-pointer"
+                    className="flex items-center gap-1.5 h-8 sm:h-9 rounded-lg bg-[#C5A059] px-3 sm:px-4 text-xs font-bold text-[#0A0A0B] shadow-lg hover:bg-[#DFC182] active:scale-95 transition cursor-pointer shrink-0"
                   >
-                    {t.loginRegister}
+                    <span className="hidden sm:inline">{t.loginRegister}</span>
+                    <span className="inline sm:hidden">{lang === "en" ? "Sign In" : lang === "chm" ? "Пураш" : lang === "sah" ? "Кирии" : "Войти"}</span>
                   </button>
                 </div>
               )}
@@ -705,6 +707,19 @@ export default function App() {
                 </div>
 
               </div>
+
+              {/* Target Career Balance Wheel (Goals) */}
+              <TargetWheelCard
+                criteria={criteria}
+                lang={lang}
+                theme={theme === "dark" || theme === "light" ? theme : "light"}
+                activeWheelTitle={wheelTitle}
+                colorMode={colorMode}
+                colorCritical={colorCritical}
+                colorRoutine={colorRoutine}
+                colorComfort={colorComfort}
+                colorPeak={colorPeak}
+              />
 
               {/* Individual Career Development Plan Section (IDP) */}
               <CareerPlan

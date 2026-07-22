@@ -10,6 +10,7 @@ import { WheelChart } from "./components/WheelChart";
 import { WheelEditor } from "./components/WheelEditor";
 import { CareerPlan } from "./components/CareerPlan";
 import { TargetWheelCard } from "./components/TargetWheelCard";
+import { CareerGoalsTable } from "./components/CareerGoalsTable";
 import { History } from "./components/History";
 import { Language, TRANSLATIONS } from "./translations";
 import {
@@ -711,6 +712,7 @@ export default function App() {
               {/* Target Career Balance Wheel (Goals) */}
               <TargetWheelCard
                 criteria={criteria}
+                onChangeCriteria={setCriteria}
                 lang={lang}
                 theme={theme === "dark" || theme === "light" ? theme : "light"}
                 activeWheelTitle={wheelTitle}
@@ -727,6 +729,14 @@ export default function App() {
                 onChangeCriteria={setCriteria}
                 lang={lang}
                 theme={theme}
+                activeUsername={currentUser ? currentUser.username : undefined}
+                activeWheelTitle={wheelTitle}
+              />
+
+              {/* Career Goals Assignment Table */}
+              <CareerGoalsTable
+                lang={lang}
+                theme={theme === "dark" || theme === "light" ? theme : "light"}
                 activeUsername={currentUser ? currentUser.username : undefined}
                 activeWheelTitle={wheelTitle}
               />

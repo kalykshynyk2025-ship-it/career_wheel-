@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Criterion } from "../types";
-import { Download, Sparkles } from "lucide-react";
+import { Download, Sparkles, Edit3, ChevronDown, ChevronUp, Check, Plus, Minus } from "lucide-react";
 import { Language, TRANSLATIONS } from "../translations";
 
 interface TargetWheelCardProps {
   criteria: Criterion[];
+  onChangeCriteria?: (criteria: Criterion[]) => void;
+  onUpdateTargetScore?: (id: string, targetScore: number) => void;
   lang: Language;
   theme: "dark" | "light";
   activeWheelTitle?: string;
@@ -59,6 +61,8 @@ const getWedgePath = (cx: number, cy: number, startDeg: number, endDeg: number, 
 
 export function TargetWheelCard({
   criteria,
+  onChangeCriteria,
+  onUpdateTargetScore,
   lang,
   theme,
   activeWheelTitle = "My Career Wheel",
@@ -70,6 +74,8 @@ export function TargetWheelCard({
 }: TargetWheelCardProps) {
   const isDark = theme === "dark";
   const t = TRANSLATIONS[lang];
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [showEditor, setShowEditor] = useState<boolean>(true);
 
   const getWedgeColor = (score: number, idx: number) => {
     if (colorMode === "palette") {
@@ -79,6 +85,45 @@ export function TargetWheelCard({
     if (score <= 6) return colorRoutine;
     if (score <= 8) return colorComfort;
     return colorPeak;
+  };
+
+  const handleTargetUpdate = (id: string, newTarget: number) => {
+    const clamped = Math.min(10, Math.max(1, newTarget));
+    if (onUpdateTargetScore) {
+      onUpdateTargetScore(id, clamped);
+    } else if (onChangeCriteria) {
+      onChangeCriteria(criteria.map(c => c.id === id ? { ...c, targetScore: clamped } : c));
+    }
+  };
+
+  const handleSvgClick = (event: React.MouseEvent<SVGGElement>, idx: number, id: string) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
+    // Scale to viewBox 320x320
+    const svgX = (mouseX / rect.width) * 320;
+    const svgY = (mouseY / rect.height) * 320;
+
+    const cx = 160;
+    const cy = 160;
+    const dx = svgX - cx;
+    const dy = svgY - cy;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    const rInner = 30;
+    const rOuter = 110;
+
+    if (distance <= rInner) {
+      handleTargetUpdate(id, 1);
+    } else if (distance >= rOuter) {
+      handleTargetUpdate(id, 10);
+    } else {
+      const percentage = (distance - rInner) / (rOuter - rInner);
+      const score = Math.min(10, Math.max(1, Math.round(1 + percentage * 9)));
+      handleTargetUpdate(id, score);
+    }
   };
 
   const exportTargetWheelPNG = () => {
@@ -257,7 +302,7 @@ export function TargetWheelCard({
       
       <div className="flex flex-col md:flex-row justify-center items-center gap-8 py-4">
         <div className="relative">
-          <svg width="280" height="280" viewBox="0 0 320 320" className="mx-auto overflow-visible select-none">
+          <svg ref={svgRef} width="280" height="280" viewBox="0 0 320 320" className="mx-auto overflow-visible select-none">
             {/* Concentric rings */}
             {Array.from({ length: 10 }).map((_, i) => {
               const l = i + 1;
@@ -286,6 +331,7 @@ export function TargetWheelCard({
               const rCurrent = 30 + (currentVal / 10) * (110 - 30);
               const rTarget = 30 + (targetVal / 10) * (110 - 30);
               
+              const pathFull = getWedgePath(160, 160, startDeg, endDeg, 30, 110);
               const pathTarget = getWedgePath(160, 160, startDeg, endDeg, 30, rTarget);
               const pathCurrent = getWedgePath(160, 160, startDeg, endDeg, 30, rCurrent);
               
@@ -293,25 +339,31 @@ export function TargetWheelCard({
               const colorTarget = getWedgeColor(targetVal, idx);
               
               return (
-                <g key={crit.id}>
+                <g key={crit.id} className="cursor-pointer group" onClick={(e) => handleSvgClick(e, idx, crit.id)}>
+                  {/* Invisible full wedge hit target */}
+                  <path
+                    d={pathFull}
+                    fill="transparent"
+                  />
+
                   {/* Target slice with light opacity */}
                   <path
                     d={pathTarget}
                     fill={colorTarget}
-                    fillOpacity={0.18}
+                    fillOpacity={0.22}
                     stroke={colorTarget}
-                    strokeWidth={1}
-                    className="transition-all duration-300"
+                    strokeWidth={1.5}
+                    className="transition-all duration-300 group-hover:fill-opacity-35"
                   />
                   
                   {/* Current slice layered with more solid opacity */}
                   <path
                     d={pathCurrent}
                     fill={colorCurrent}
-                    fillOpacity={0.75}
+                    fillOpacity={0.8}
                     stroke={colorCurrent}
                     strokeWidth={1.5}
-                    className="transition-all duration-300"
+                    className="transition-all duration-300 pointer-events-none"
                   />
                   
                   {/* Radial separator line */}
@@ -378,10 +430,108 @@ export function TargetWheelCard({
             isDark ? "text-white/40 border-white/5" : "text-zinc-500 border-zinc-200"
           }`}>
             {lang === "en" 
-              ? "The shaded area depicts your current evaluation. The outer light border reflects your set goal scores for each career criterion." 
-              : "Закрашенная область показывает текущую оценку. Внешняя прозрачная граница отражает ваши целевые показатели по каждому карьерному критерию."}
+              ? "Click directly on any wedge of the target wheel above or adjust the sliders below to set target scores (1–10) for each criterion." 
+              : "Нажимайте прямо на секторы целевого колеса выше или используйте ползунки ниже, чтобы задать целевые баллы (1–10) по каждому критерию."}
           </p>
         </div>
+      </div>
+
+      {/* Interactive Target Score Editor List */}
+      <div className={`mt-6 border-t pt-5 ${isDark ? "border-white/5" : "border-zinc-200"}`}>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => setShowEditor(!showEditor)}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#C5A059] hover:text-[#DFC182] transition cursor-pointer"
+          >
+            <Edit3 className="h-4 w-4" />
+            <span>
+              {lang === "en" 
+                ? "Edit Target Scores (Wheel 2)" 
+                : lang === "chm" 
+                  ? "Целевой балл-влакым тӧрлатымаш" 
+                  : lang === "sah" 
+                    ? "Сыал баалларын уларытыы" 
+                    : "Редактирование целевых баллов (Колесо 2)"}
+            </span>
+            {showEditor ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          
+          <span className={`text-[11px] ${isDark ? "text-white/40" : "text-zinc-500"}`}>
+            {lang === "en" ? "Click wheel or use sliders below" : "Нажмите на колесо или двигайте слайдеры"}
+          </span>
+        </div>
+
+        {showEditor && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar">
+            {criteria.map((crit, idx) => {
+              const currentScore = crit.score;
+              const targetScore = crit.targetScore ?? currentScore;
+              const color = getWedgeColor(targetScore, idx);
+              return (
+                <div
+                  key={crit.id}
+                  className={`flex flex-col gap-2 rounded-xl border p-3 transition-all ${
+                    isDark 
+                      ? "border-white/5 bg-[#0D0D0F] hover:border-white/10" 
+                      : "border-zinc-150 bg-zinc-50 hover:border-zinc-200 shadow-xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span className={`font-semibold truncate max-w-[180px] ${isDark ? "text-white" : "text-zinc-800"}`} title={crit.name}>
+                      <span className="text-[#C5A059] font-mono mr-1.5">{idx + 1}.</span>
+                      {crit.name}
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] ${isDark ? "text-white/40" : "text-zinc-500"}`}>
+                        {lang === "en" ? "Cur" : "Факт"}: <b className={isDark ? "text-white" : "text-zinc-800"}>{currentScore}</b>
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md text-[#0A0A0B]" style={{ backgroundColor: color }}>
+                        {lang === "en" ? "Goal" : "Цель"}: {targetScore}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleTargetUpdate(crit.id, targetScore - 1)}
+                      disabled={targetScore <= 1}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs font-bold transition active:scale-95 disabled:opacity-30 cursor-pointer ${
+                        isDark 
+                          ? "border-white/10 bg-white/5 text-white hover:bg-white/10" 
+                          : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
+                      }`}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={targetScore}
+                      onChange={(e) => handleTargetUpdate(crit.id, parseInt(e.target.value))}
+                      className={`h-1.5 w-full cursor-pointer appearance-none rounded-lg outline-none accent-[#C5A059] ${
+                        isDark ? "bg-white/10" : "bg-zinc-200"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleTargetUpdate(crit.id, targetScore + 1)}
+                      disabled={targetScore >= 10}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs font-bold transition active:scale-95 disabled:opacity-30 cursor-pointer ${
+                        isDark 
+                          ? "border-white/10 bg-white/5 text-white hover:bg-white/10" 
+                          : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100"
+                      }`}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

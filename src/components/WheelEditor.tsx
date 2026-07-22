@@ -194,7 +194,7 @@ export function WheelEditor({
             {t.emptyListWarning}
           </div>
         ) : (
-          <div className="space-y-4 pr-2">
+          <div className="space-y-4 pr-1.5 max-h-[380px] overflow-y-auto custom-scrollbar scroll-smooth">
             <AnimatePresence initial={false}>
               {criteria.map((crit, idx) => (
                 <motion.div

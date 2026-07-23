@@ -25,7 +25,8 @@ import {
   Sun,
   Moon,
   Palette,
-  RotateCcw
+  RotateCcw,
+  ExternalLink
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -759,12 +760,36 @@ export default function App() {
         </main>
 
         {/* Footer */}
-        <footer className={`border-t py-8 mt-16 text-center text-xs transition-colors duration-200 ${
+        <footer className={`border-t py-10 mt-16 text-center text-xs transition-colors duration-200 ${
           isDark ? "border-white/5 bg-[#0F0F12] text-white/40" : "border-zinc-200 bg-white text-zinc-500"
         }`}>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <p>{t.footerCopy1}</p>
-            <p className="mt-1">{t.footerCopy2}</p>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col items-center justify-center gap-4">
+            <div>
+              <p>{t.footerCopy1}</p>
+              <p className="mt-1 text-[11px] opacity-70">{t.footerCopy2}</p>
+            </div>
+
+            <div className={`pt-4 border-t w-full max-w-md mx-auto flex flex-col items-center justify-center gap-2 ${
+              isDark ? "border-white/5" : "border-zinc-200"
+            }`}>
+              <span className={`text-[10px] uppercase tracking-widest font-semibold ${isDark ? "text-white/40" : "text-zinc-400"}`}>
+                {lang === "en" ? "Created by" : "Разработчик инструмента"}
+              </span>
+              <a
+                href="https://kalyk-shynyk-web-studio.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center gap-0.5 rounded-xl border border-[#C5A059]/40 bg-[#C5A059]/5 px-5 py-2.5 hover:bg-[#C5A059]/15 hover:border-[#C5A059]/60 transition-all cursor-pointer shadow-sm hover:shadow-md"
+              >
+                <span className="text-xs font-bold tracking-wide text-[#DFC182] group-hover:text-[#F3E5C8] transition">
+                  КАЛЫК ШЫНЫК
+                </span>
+                <span className="text-[10px] font-medium tracking-wider text-[#C5A059] group-hover:text-[#DFC182] transition flex items-center gap-1">
+                  WEB STUDIO &amp; GAMIFICATION
+                  <ExternalLink className="h-3 w-3 inline ml-0.5" />
+                </span>
+              </a>
+            </div>
           </div>
         </footer>
       </div>

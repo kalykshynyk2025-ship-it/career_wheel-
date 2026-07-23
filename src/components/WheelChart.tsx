@@ -437,6 +437,21 @@ export function WheelChart({
     });
 
     // Drawing Legend of Comparison if applicable
+    // Draw Developer Credit Footer on Every Page
+    ctx.save();
+    ctx.fillStyle = "#0A0A0B";
+    ctx.fillRect(0, canvas.height - 45, canvas.width, 45);
+    ctx.fillStyle = "#DFC182";
+    ctx.font = "bold 13px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      canvas.width / 2,
+      canvas.height - 225 / 10
+    );
+    ctx.restore();
+
     if (compareCriteria) {
       ty += 70;
       ctx.fillStyle = "#FFF7ED";
@@ -737,29 +752,22 @@ export function WheelChart({
     ctx.textAlign = "right";
     ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1540);
 
+    // Draw Developer Credit Footer
+    ctx.save();
+    ctx.fillStyle = "#0A0A0B";
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.fillStyle = "#DFC182";
+    ctx.font = "bold 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      canvas.width / 2,
+      canvas.height - 25
+    );
+    ctx.restore();
+
     return canvas;
-  };
-
-  // Trigger Local PNG Export
-  const exportPNG = () => {
-    const canvas = drawCanvas();
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
-    link.download = `career_wheel_${sanitizedTitle}.png`;
-    link.href = dataUrl;
-    link.click();
-  };
-
-  // Trigger Local PNG Export for Development Plan
-  const exportPlanPNG = () => {
-    const canvas = drawPlanCanvas();
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
-    link.download = `career_development_plan_${sanitizedTitle}.png`;
-    link.href = dataUrl;
-    link.click();
   };
 
   // Trigger Local PDF Report Export
@@ -774,21 +782,11 @@ export function WheelChart({
       format: [1500, 1100],
     });
 
-    // Add Page 1
+    // Add Page 1 (Interactive Wheel)
     pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
 
-    // Add Page 2 (Plan Matrix with Wheels)
-    try {
-      const planCanvas = drawPlanCanvas();
-      const planDataUrl = planCanvas.toDataURL("image/jpeg", 0.95);
-      pdf.addPage([1500, 1600], "landscape");
-      pdf.addImage(planDataUrl, "JPEG", 0, 0, 1500, 1600, undefined, "FAST");
-    } catch (err) {
-      console.error("Error adding career plan page to PDF:", err);
-    }
-
     const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
-    pdf.save(`career_audit_report_${sanitizedTitle}.pdf`);
+    pdf.save(`interactive_wheel_${sanitizedTitle}.pdf`);
   };
 
   const getAverageScore = () => {
@@ -819,26 +817,15 @@ export function WheelChart({
         {/* Export Buttons */}
         <div className="flex flex-wrap gap-2 justify-end">
           <button
-            onClick={exportPNG}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${
-              isDark 
-                ? "border-white/10 bg-[#0D0D0F] text-white/80 hover:border-[#C5A059] hover:text-[#C5A059]" 
-                : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-[#C5A059] hover:text-[#C5A059] shadow-xs"
-            }`}
-          >
-            <Download className="h-3.5 w-3.5 text-[#C5A059]" />
-            {t.savePng}
-          </button>
-          <button
             onClick={exportPDF}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${
+            className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition active:scale-95 cursor-pointer ${
               isDark 
                 ? "border-[#C5A059]/40 bg-[#C5A059]/10 text-[#C5A059] hover:bg-[#C5A059]/20" 
                 : "border-[#C5A059]/30 bg-[#C5A059]/10 text-[#8C6D32] hover:bg-[#C5A059]/20 shadow-xs"
             }`}
           >
             <FileDown className="h-3.5 w-3.5" />
-            {t.downloadPdf}
+            {t.savePng}
           </button>
         </div>
       </div>

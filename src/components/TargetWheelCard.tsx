@@ -5,8 +5,9 @@
 
 import React, { useRef, useState } from "react";
 import { Criterion } from "../types";
-import { Download, Sparkles, Edit3, ChevronDown, ChevronUp, Check, Plus, Minus } from "lucide-react";
+import { Download, FileDown, Sparkles, Edit3, ChevronDown, ChevronUp, Check, Plus, Minus } from "lucide-react";
 import { Language, TRANSLATIONS } from "../translations";
+import { jsPDF } from "jspdf";
 
 interface TargetWheelCardProps {
   criteria: Criterion[];
@@ -126,38 +127,63 @@ export function TargetWheelCard({
     }
   };
 
-  const exportTargetWheelPNG = () => {
+  const exportTargetWheelPDF = () => {
     const canvas = document.createElement("canvas");
-    canvas.width = 600;
-    canvas.height = 650;
+    canvas.width = 1500;
+    canvas.height = 1100;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Background
-    ctx.fillStyle = isDark ? "#0A0A0B" : "#FFFFFF";
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // White background
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Title text
-    ctx.fillStyle = isDark ? "#FFFFFF" : "#1E293B";
-    ctx.font = "bold 18px Inter, sans-serif";
-    ctx.textAlign = "center";
-    const titleText = lang === "en" 
-      ? "Target Career Balance Wheel" 
-      : lang === "chm" 
-        ? "Карьер кушмо орава (Цель)" 
-        : lang === "sah" 
-          ? "Карьера сайдыытын эргимтэтэ (Сыал)" 
-          : "Колесо карьерного роста (Цели)";
-    ctx.fillText(titleText, 300, 45);
+    // Golden header accent
+    ctx.fillStyle = "#C5A059";
+    ctx.fillRect(0, 0, canvas.width, 15);
 
-    const cx = 300;
-    const cy = 310;
-    const crInner = 70;
-    const crOuter = 220;
+    // Header Title
+    ctx.fillStyle = "#1E293B";
+    ctx.font = "bold 32px Inter, system-ui, sans-serif";
+    const titleText = lang === "en" 
+      ? "TARGET CAREER BALANCE WHEEL" 
+      : lang === "chm" 
+        ? "КАРЬЕР КУШМО ОРАВА (ЦЕЛЬ)" 
+        : lang === "sah" 
+          ? "КАРЬЕРА САЙДЫЫТЫН ЭРГИМТЭТЭ (СЫАЛ)" 
+          : "КОЛЕСО КАРЬЕРНОГО РОСТА (ЦЕЛИ)";
+    ctx.fillText(titleText, 70, 85);
+
+    ctx.fillStyle = "#64748B";
+    ctx.font = "500 18px Inter, system-ui, sans-serif";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const dateStr = new Date().toLocaleDateString(localeStr, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    ctx.fillText(`Замер: ${activeWheelTitle}  |  Дата: ${dateStr}`, 70, 125);
+
+    // Separator line
+    ctx.strokeStyle = "#F1F5F9";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(70, 155);
+    ctx.lineTo(1430, 155);
+    ctx.stroke();
+
+    // Draw Left Side: Target Wheel
+    const cx = 450;
+    const cy = 580;
+    const crInner = 80;
+    const crOuter = 320;
     const crStep = (crOuter - crInner) / 10;
 
     // Concentric rings
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+    ctx.strokeStyle = "#E2E8F0";
     ctx.lineWidth = 1;
     for (let l = 1; l <= 10; l++) {
       const r = crInner + l * crStep;
@@ -165,10 +191,9 @@ export function TargetWheelCard({
       ctx.arc(cx, cy, r, 0, 2 * Math.PI);
       ctx.stroke();
 
-      // Label concentric ring scores
-      ctx.fillStyle = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
-      ctx.font = "bold 11px Inter, monospace";
-      ctx.fillText(l.toString(), cx - 5, cy - r + 3);
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "bold 12px Inter, monospace";
+      ctx.fillText(l.toString(), cx - 6, cy - r + 4);
     }
 
     const N = criteria.length;
@@ -182,7 +207,7 @@ export function TargetWheelCard({
         const startRad = idx * angleStep - Math.PI / 2;
         const endRad = (idx + 1) * angleStep - Math.PI / 2;
         
-        // Target slice (drawn with lighter opacity)
+        // Target slice
         const valRadiusTarget = crInner + (targetVal / 10) * (crOuter - crInner);
         ctx.save();
         ctx.fillStyle = colorTarget;
@@ -195,7 +220,7 @@ export function TargetWheelCard({
         ctx.fill();
         ctx.restore();
 
-        // Current slice (layered with solid opacity)
+        // Current slice
         const valRadiusCurrent = crInner + (currentVal / 10) * (crOuter - crInner);
         ctx.save();
         ctx.fillStyle = colorCurrent;
@@ -208,8 +233,8 @@ export function TargetWheelCard({
         ctx.fill();
         ctx.restore();
 
-        // Stroke wedge
-        ctx.strokeStyle = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+        // Wedge outline
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(cx, cy, valRadiusTarget, startRad, endRad);
@@ -218,41 +243,122 @@ export function TargetWheelCard({
         ctx.closePath();
         ctx.stroke();
 
-        // Rays separating slices
-        ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+        // Rays
+        ctx.strokeStyle = "#E2E8F0";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(cx + crInner * Math.cos(startRad), cy + crInner * Math.sin(startRad));
         ctx.lineTo(cx + crOuter * Math.cos(startRad), cy + crOuter * Math.sin(startRad));
         ctx.stroke();
 
-        // Labels at outer edge
+        // Outer numbers
         const midRad = startRad + angleStep / 2;
-        const labelX = cx + (crOuter + 22) * Math.cos(midRad);
-        const labelY = cy + (crOuter + 22) * Math.sin(midRad);
+        const labelX = cx + (crOuter + 28) * Math.cos(midRad);
+        const labelY = cy + (crOuter + 28) * Math.sin(midRad);
         
-        ctx.fillStyle = isDark ? "rgba(255,255,255,0.7)" : "#475569";
-        ctx.font = "bold 13px Inter, sans-serif";
+        ctx.fillStyle = "#334155";
+        ctx.font = "bold 15px Inter, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText((idx + 1).toString(), labelX, labelY);
       });
     }
 
-    // Legend at bottom of PNG
+    // Legend at bottom of chart
     ctx.textAlign = "center";
-    ctx.fillStyle = isDark ? "rgba(255,255,255,0.6)" : "#475569";
-    ctx.font = "11px Inter, sans-serif";
-    const currentText = lang === "en" ? "Current Level" : lang === "chm" ? "Кызытсе уровень" : lang === "sah" ? "БилиҥҤи таҺым" : "Текущий уровень";
-    const growthText = lang === "en" ? "Growth (Target)" : lang === "chm" ? "Вияҥмаш (Цель)" : lang === "sah" ? "Сайдыы (Сыал)" : "Прирост (Цель)";
-    ctx.fillText(`●  ${currentText}   |   ○  ${growthText}`, 300, 580);
+    ctx.fillStyle = "#475569";
+    ctx.font = "14px Inter, sans-serif";
+    const currentText = lang === "en" ? "Current Status" : lang === "chm" ? "Кызытсе уровень" : lang === "sah" ? "БилиҥҤи таҺым" : "Текущий статус";
+    const growthText = lang === "en" ? "Target Growth Goal" : lang === "chm" ? "ВияҤмаш (Цель)" : lang === "sah" ? "Сайдыы (Сыал)" : "Целевой рост";
+    ctx.fillText(`●  ${currentText} (Сплошной)   |   ○  ${growthText} (Полупрозрачный)`, cx, cy + crOuter + 65);
 
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
+    // Right Side: Goals & Metrics Table
+    const tx = 920;
+    let ty = 180;
+    
+    // Table Header Box
+    ctx.fillStyle = "#1E293B";
+    ctx.fillRect(tx, ty, 510, 42);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 15px Inter, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("КРИТЕРИЙ", tx + 20, ty + 26);
+    ctx.fillText("СЕЙЧАС", tx + 310, ty + 26);
+    ctx.fillText("ЦЕЛЬ", tx + 400, ty + 26);
+    ctx.fillText("РОСТ", tx + 460, ty + 26);
+
+    criteria.forEach((crit, idx) => {
+      ty += 46;
+      const targetVal = crit.targetScore ?? crit.score;
+      const diff = targetVal - crit.score;
+
+      // Alternating row background
+      if (idx % 2 === 1) {
+        ctx.fillStyle = "#F8FAFC";
+        ctx.fillRect(tx, ty, 510, 42);
+      }
+      ctx.strokeStyle = "#F1F5F9";
+      ctx.strokeRect(tx, ty, 510, 42);
+
+      // Color Badge Indicator
+      ctx.fillStyle = getWedgeColor(targetVal, idx);
+      ctx.beginPath();
+      ctx.arc(tx + 25, ty + 21, 8, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Title
+      ctx.fillStyle = "#334155";
+      ctx.font = "600 14px Inter, sans-serif";
+      let nameStr = `${idx + 1}. ${crit.name}`;
+      const maxW = 250;
+      if (ctx.measureText(nameStr).width > maxW) {
+        while (ctx.measureText(nameStr + "...").width > maxW && nameStr.length > 0) {
+          nameStr = nameStr.substring(0, nameStr.length - 1);
+        }
+        nameStr = nameStr + "...";
+      }
+      ctx.fillText(nameStr, tx + 45, ty + 25);
+
+      // Scores
+      ctx.fillStyle = "#475569";
+      ctx.font = "bold 15px Inter, monospace";
+      ctx.fillText(`${crit.score}`, tx + 330, ty + 25);
+
+      ctx.fillStyle = "#10B981";
+      ctx.font = "bold 15px Inter, monospace";
+      ctx.fillText(`${targetVal}`, tx + 410, ty + 25);
+
+      ctx.fillStyle = diff > 0 ? "#C5A059" : diff < 0 ? "#F59E0B" : "#94A3B8";
+      ctx.font = "bold 14px Inter, sans-serif";
+      const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+      ctx.fillText(diffStr, tx + 470, ty + 25);
+    });
+
+    // Draw Developer Credit Footer on Every Page
+    ctx.save();
+    ctx.fillStyle = "#0A0A0B";
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.fillStyle = "#DFC182";
+    ctx.font = "bold 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      canvas.width / 2,
+      canvas.height - 25
+    );
+    ctx.restore();
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [1500, 1100],
+    });
+    pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, 1100, undefined, "FAST");
+
     const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
-    link.download = `career_target_wheel_${sanitizedTitle}.png`;
-    link.href = dataUrl;
-    link.click();
+    pdf.save(`target_career_wheel_${sanitizedTitle}.pdf`);
   };
 
   if (criteria.length === 0) return null;
@@ -286,12 +392,12 @@ export function TargetWheelCard({
 
         <div className="flex items-center gap-2.5 self-end sm:self-auto">
           <button
-            onClick={exportTargetWheelPNG}
+            onClick={exportTargetWheelPDF}
             className="flex items-center gap-1.5 rounded-xl border border-[#C5A059]/40 bg-[#C5A059]/10 px-3.5 py-1.5 text-xs font-bold text-[#DFC182] hover:bg-[#C5A059]/20 transition cursor-pointer active:scale-95 shadow-md"
-            title={lang === "en" ? "Save PNG" : "Сохранить PNG"}
+            title={lang === "en" ? "Export PDF" : "Экспорт PDF"}
           >
-            <Download className="h-3.5 w-3.5 text-[#C5A059]" />
-            <span>{lang === "en" ? "Save PNG" : "Сохранить PNG"}</span>
+            <FileDown className="h-3.5 w-3.5 text-[#C5A059]" />
+            <span>{lang === "en" ? "Export PDF" : "Экспорт PDF"}</span>
           </button>
           
           <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider font-mono">

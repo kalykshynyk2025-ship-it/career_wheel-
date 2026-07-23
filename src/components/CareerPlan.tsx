@@ -15,11 +15,13 @@ import {
   ListTodo,
   FileText,
   Plus,
-  Download
+  Download,
+  FileDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, TRANSLATIONS } from "../translations";
 import { generatePseudoAiSteps } from "../coaching-context";
+import { jsPDF } from "jspdf";
 
 interface CareerPlanProps {
   criteria: Criterion[];
@@ -391,24 +393,43 @@ export function CareerPlan({
     ctx.textAlign = "right";
     ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1540);
 
+    // Draw Developer Credit Footer
+    ctx.save();
+    ctx.fillStyle = "#0A0A0B";
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.fillStyle = "#DFC182";
+    ctx.font = "bold 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      canvas.width / 2,
+      canvas.height - 25
+    );
+    ctx.restore();
+
     return canvas;
   };
 
-  const exportPlanPNG = () => {
+  const exportPlanPDF = () => {
     const canvas = drawPlanCanvas();
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [1500, 1600],
+    });
+    pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, 1600, undefined, "FAST");
+
     const sanitizedTitle = activeWheelTitle.toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
-    link.download = `career_development_plan_${sanitizedTitle}.png`;
-    link.href = dataUrl;
-    link.click();
+    pdf.save(`individual_career_plan_${sanitizedTitle}.pdf`);
   };
 
   return (
     <div className={`rounded-2xl border p-6 shadow-xl transition-all duration-200 space-y-8 ${
       isDark ? "border-white/10 bg-[#0F0F12]" : "border-zinc-200 bg-white"
     }`}>
-      {/* Block Header with title, description, and export PNG plan button */}
+      {/* Block Header with title, description, and export PDF plan button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-5">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#C5A059]/10 border border-[#C5A059]/20 text-[#C5A059] shadow-inner">
@@ -426,10 +447,10 @@ export function CareerPlan({
 
         {criteria.length > 0 && (
           <button
-            onClick={exportPlanPNG}
+            onClick={exportPlanPDF}
             className="flex items-center justify-center gap-2 rounded-xl bg-[#C5A059] px-4 py-2.5 text-xs font-bold text-[#0A0A0B] hover:bg-[#DFC182] active:scale-95 transition cursor-pointer self-start md:self-auto shrink-0 shadow-lg"
           >
-            <Download className="h-4 w-4" />
+            <FileDown className="h-4 w-4" />
             {t.careerPlanSavePngBtn}
           </button>
         )}

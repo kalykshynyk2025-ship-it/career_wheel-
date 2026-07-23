@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Target, Plus, Trash2, RotateCcw, Download, Sparkles, CheckCircle2, HelpCircle, FileText, Info } from "lucide-react";
+import { Target, Plus, Trash2, RotateCcw, Download, FileDown, Sparkles, CheckCircle2, HelpCircle, FileText, Info } from "lucide-react";
 import { Language } from "../translations";
+import { jsPDF } from "jspdf";
 
 export interface GoalCategoryRow {
   id: string;
@@ -218,80 +219,148 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
     }
   };
 
-  const exportTablePNG = () => {
+  const exportTablePDF = () => {
     const canvas = document.createElement("canvas");
-    canvas.width = 900;
-    canvas.height = 180 + rows.length * 130;
+    canvas.width = 1500;
+    const rowHeight = 160;
+    canvas.height = 280 + rows.length * rowHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Background
-    ctx.fillStyle = isDark ? "#0A0A0B" : "#FFFFFF";
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // White background
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Title
-    ctx.fillStyle = isDark ? "#FFFFFF" : "#1E293B";
-    ctx.font = "bold 20px Inter, sans-serif";
-    ctx.fillText(lang === "en" ? "Career Goals Table" : "Карьерные цели (Таблица)", 40, 45);
+    // Golden header accent
+    ctx.fillStyle = "#C5A059";
+    ctx.fillRect(0, 0, canvas.width, 15);
 
-    ctx.fillStyle = isDark ? "rgba(255,255,255,0.5)" : "#64748B";
-    ctx.font = "12px Inter, sans-serif";
-    ctx.fillText(`${lang === "en" ? "Assessment" : "Замер"}: ${activeWheelTitle || "Мое колесо карьеры"} | ${new Date().toLocaleDateString()}`, 40, 70);
+    // Header Title
+    ctx.fillStyle = "#1E293B";
+    ctx.font = "bold 30px Inter, system-ui, sans-serif";
+    ctx.fillText("КАРЬЕРНЫЕ ЦЕЛИ РАЗВИТИЯ КАРЬЕРНЫХ КРИТЕРИЕВ", 70, 85);
 
-    // Header boxes
-    const colWidth = 260;
-    const startX = 40;
-    let startY = 100;
+    ctx.fillStyle = "#64748B";
+    ctx.font = "500 18px Inter, system-ui, sans-serif";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const dateStr = new Date().toLocaleDateString(localeStr, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    ctx.fillText(`Замер: ${activeWheelTitle || "Мое колесо карьеры"}  |  Дата: ${dateStr}`, 70, 125);
 
-    // Headers
+    // Separator line
+    ctx.strokeStyle = "#F1F5F9";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(70, 155);
+    ctx.lineTo(1430, 155);
+    ctx.stroke();
+
+    const startX = 70;
+    let startY = 185;
+
+    // Table Headers
     const headers = [
-      lang === "en" ? "1. Today - Point A" : "1. Сегодня - Пункт А",
+      lang === "en" ? "1. Today - Point A" : "1. Сегодня — Пункт А",
       lang === "en" ? "2. 2–3 Years (Medium)" : "2. 2–3 года",
-      lang === "en" ? "3. 4–5 Years (Goals)" : "3. 4–5 лет (Цели)"
+      lang === "en" ? "3. 4–5 Years (Target Goals)" : "3. 4–5 лет (Цели)"
     ];
 
-    ctx.fillStyle = isDark ? "rgba(197, 160, 89, 0.2)" : "rgba(197, 160, 89, 0.15)";
-    ctx.fillRect(startX, startY, 820, 36);
+    ctx.fillStyle = "#1E293B";
+    ctx.fillRect(startX, startY, 1360, 45);
 
-    ctx.fillStyle = isDark ? "#DFC182" : "#8C6D32";
-    ctx.font = "bold 13px Inter, sans-serif";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 16px Inter, sans-serif";
     headers.forEach((h, i) => {
-      ctx.fillText(h, startX + 15 + i * 275, startY + 22);
+      ctx.fillText(h, startX + 20 + i * 450, startY + 28);
     });
 
-    startY += 45;
+    startY += 55;
 
-    // Rows
+    // Helper function for wrapped text rendering
+    const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+      if (!text) return;
+      const words = text.split(" ");
+      let line = "";
+      let currentY = y;
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + " ";
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line, x, currentY);
+          line = words[n] + " ";
+          currentY += lineHeight;
+          if (currentY > y + 80) { // cap height
+            ctx.fillText(line + "...", x, currentY);
+            return;
+          }
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, x, currentY);
+    };
+
+    // Table Rows
     rows.forEach((row, rIdx) => {
-      ctx.fillStyle = isDark ? "#141418" : "#F8FAFC";
-      ctx.fillRect(startX, startY, 820, 110);
-      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-      ctx.strokeRect(startX, startY, 820, 110);
+      ctx.fillStyle = rIdx % 2 === 1 ? "#F8FAFC" : "#FFFFFF";
+      ctx.fillRect(startX, startY, 1360, 140);
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(startX, startY, 1360, 140);
 
-      // Category title
+      // Gold vertical strip
       ctx.fillStyle = "#C5A059";
-      ctx.font = "bold 12px Inter, sans-serif";
-      ctx.fillText(row.category, startX + 10, startY + 20);
+      ctx.fillRect(startX, startY, 5, 140);
 
-      // Col 1 text
-      ctx.fillStyle = isDark ? "#EEEEEE" : "#334155";
-      ctx.font = "11px Inter, sans-serif";
-      ctx.fillText(row.pointA ? row.pointA.substring(0, 110) + (row.pointA.length > 110 ? "..." : "") : "—", startX + 10, startY + 45, 250);
+      // Category Header inside row
+      ctx.fillStyle = "#1E293B";
+      ctx.font = "bold 15px Inter, sans-serif";
+      ctx.fillText(row.category, startX + 20, startY + 28);
 
-      // Col 2 text
-      ctx.fillText(row.mediumTerm ? row.mediumTerm.substring(0, 110) + (row.mediumTerm.length > 110 ? "..." : "") : "—", startX + 285, startY + 45, 250);
+      // Column 1 text
+      ctx.fillStyle = "#334155";
+      ctx.font = "13px Inter, sans-serif";
+      wrapText(row.pointA || "—", startX + 20, startY + 58, 410, 18);
 
-      // Col 3 text
-      ctx.fillText(row.longTerm ? row.longTerm.substring(0, 110) + (row.longTerm.length > 110 ? "..." : "") : "—", startX + 560, startY + 45, 250);
+      // Column 2 text
+      wrapText(row.mediumTerm || "—", startX + 470, startY + 58, 410, 18);
 
-      startY += 120;
+      // Column 3 text
+      wrapText(row.longTerm || "—", startX + 920, startY + 58, 410, 18);
+
+      startY += 155;
     });
 
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.download = `career_goals_table_${Date.now()}.png`;
-    link.href = dataUrl;
-    link.click();
+    // Draw Developer Credit Footer on Every Page
+    ctx.save();
+    ctx.fillStyle = "#0A0A0B";
+    ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+    ctx.fillStyle = "#DFC182";
+    ctx.font = "bold 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      canvas.width / 2,
+      canvas.height - 25
+    );
+    ctx.restore();
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "px",
+      format: [1500, canvas.height],
+    });
+    pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, canvas.height, undefined, "FAST");
+
+    pdf.save(`career_goals_table_${Date.now()}.pdf`);
   };
 
   return (
@@ -306,7 +375,7 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
           </div>
           <div>
             <h3 className={`text-base sm:text-lg font-light font-serif tracking-tight leading-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-              {lang === "en" ? "Career Goals Exercise" : "Задание: Карьерные цели"}
+              {lang === "en" ? "Career Goals Projections" : "Карьерные цели развития карьерных критериев"}
             </h3>
             <p className={`text-xs mt-0.5 ${isDark ? "text-white/40" : "text-zinc-500"}`}>
               {lang === "en" 
@@ -326,11 +395,11 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
           </button>
 
           <button
-            onClick={exportTablePNG}
+            onClick={exportTablePDF}
             className="flex items-center gap-1.5 rounded-xl border border-[#C5A059]/40 bg-[#C5A059]/10 px-3 py-1.5 text-xs font-bold text-[#DFC182] hover:bg-[#C5A059]/20 transition cursor-pointer active:scale-95 shadow-md"
           >
-            <Download className="h-3.5 w-3.5 text-[#C5A059]" />
-            <span>{lang === "en" ? "Export PNG" : "Экспорт PNG"}</span>
+            <FileDown className="h-3.5 w-3.5 text-[#C5A059]" />
+            <span>{lang === "en" ? "Export PDF" : "Экспорт PDF"}</span>
           </button>
 
           <button
@@ -355,7 +424,7 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
           <Info className="h-5 w-5 text-[#C5A059] shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed space-y-1.5">
             <p className="font-bold text-[#DFC182] text-sm">
-              {lang === "en" ? "Task Guidelines: Career Goals" : "Задание: Карьерные цели"}
+              {lang === "en" ? "Career Goals Guidelines" : "Карьерные цели развития карьерных критериев"}
             </p>
             <p className={isDark ? "text-white/80" : "text-zinc-700"}>
               {lang === "en"

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useState } from "react";
-import { Criterion } from "../types";
+import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { CanvasExportHandle, Criterion } from "../types";
 import { Download, FileDown, Sparkles, Edit3, ChevronDown, ChevronUp, Check, Plus, Minus } from "lucide-react";
 import { Language, TRANSLATIONS } from "../translations";
 import { jsPDF } from "jspdf";
@@ -60,7 +60,7 @@ const getWedgePath = (cx: number, cy: number, startDeg: number, endDeg: number, 
   ].join(" ");
 };
 
-export function TargetWheelCard({
+export const TargetWheelCard = forwardRef<CanvasExportHandle, TargetWheelCardProps>(function TargetWheelCard({
   criteria,
   onChangeCriteria,
   onUpdateTargetScore,
@@ -72,7 +72,7 @@ export function TargetWheelCard({
   colorRoutine,
   colorComfort,
   colorPeak
-}: TargetWheelCardProps) {
+}: TargetWheelCardProps, ref) {
   const isDark = theme === "dark";
   const t = TRANSLATIONS[lang];
   const svgRef = useRef<SVGSVGElement>(null);
@@ -127,12 +127,12 @@ export function TargetWheelCard({
     }
   };
 
-  const exportTargetWheelPDF = () => {
+  const drawTargetWheelCanvas = (): HTMLCanvasElement => {
     const canvas = document.createElement("canvas");
     canvas.width = 1500;
     canvas.height = 1100;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) return canvas;
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
@@ -154,12 +154,14 @@ export function TargetWheelCard({
         ? "КАРЬЕР КУШМО ОРАВА (ЦЕЛЬ)" 
         : lang === "sah" 
           ? "КАРЬЕРА САЙДЫЫТЫН ЭРГИМТЭТЭ (СЫАЛ)" 
-          : "КОЛЕСО КАРЬЕРНОГО РОСТА (ЦЕЛИ)";
+          : lang === "tyv"
+            ? "КАРЬЕР ДЕСКИНЧИГЕЖИ (СОРУЛГА)"
+            : "КОЛЕСО КАРЬЕРНОГО РОСТА (ЦЕЛИ)";
     ctx.fillText(titleText, 70, 85);
 
     ctx.fillStyle = "#64748B";
     ctx.font = "500 18px Inter, system-ui, sans-serif";
-    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : lang === "tyv" ? "tyv-RU" : "ru-RU";
     const dateStr = new Date().toLocaleDateString(localeStr, {
       year: "numeric",
       month: "long",
@@ -202,26 +204,18 @@ export function TargetWheelCard({
       criteria.forEach((crit, idx) => {
         const targetVal = crit.targetScore ?? crit.score;
         const currentVal = crit.score;
+        const diff = targetVal - currentVal;
+
         const colorTarget = getWedgeColor(targetVal, idx);
         const colorCurrent = getWedgeColor(currentVal, idx);
         const startRad = idx * angleStep - Math.PI / 2;
         const endRad = (idx + 1) * angleStep - Math.PI / 2;
+        const midRad = startRad + angleStep / 2;
         
-        // Target slice
         const valRadiusTarget = crInner + (targetVal / 10) * (crOuter - crInner);
-        ctx.save();
-        ctx.fillStyle = colorTarget;
-        ctx.globalAlpha = 0.25;
-        ctx.beginPath();
-        ctx.arc(cx, cy, valRadiusTarget, startRad, endRad);
-        ctx.lineTo(cx + crInner * Math.cos(endRad), cy + crInner * Math.sin(endRad));
-        ctx.arc(cx, cy, crInner, endRad, startRad, true);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-
-        // Current slice
         const valRadiusCurrent = crInner + (currentVal / 10) * (crOuter - crInner);
+
+        // 1. Current slice (solid)
         ctx.save();
         ctx.fillStyle = colorCurrent;
         ctx.globalAlpha = 0.85;
@@ -232,6 +226,51 @@ export function TargetWheelCard({
         ctx.closePath();
         ctx.fill();
         ctx.restore();
+
+        // 2. Growth delta band (Прирост area)
+        if (diff > 0) {
+          ctx.save();
+          ctx.fillStyle = "#C5A059";
+          ctx.globalAlpha = 0.40;
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadiusTarget, startRad, endRad);
+          ctx.lineTo(cx + valRadiusCurrent * Math.cos(endRad), cy + valRadiusCurrent * Math.sin(endRad));
+          ctx.arc(cx, cy, valRadiusCurrent, endRad, startRad, true);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+
+          // Highlight dashed target boundary arc
+          ctx.save();
+          ctx.strokeStyle = "#B38B41";
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, valRadiusTarget, startRad, endRad);
+          ctx.stroke();
+          ctx.restore();
+
+          // Growth badge label "+Δ" right on the growth arc
+          const growthBadgeRadius = (valRadiusCurrent + valRadiusTarget) / 2;
+          const badgeX = cx + growthBadgeRadius * Math.cos(midRad);
+          const badgeY = cy + growthBadgeRadius * Math.sin(midRad);
+
+          ctx.save();
+          ctx.fillStyle = "#1E293B";
+          ctx.beginPath();
+          ctx.arc(badgeX, badgeY, 12, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.strokeStyle = "#DFC182";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = "#DFC182";
+          ctx.font = "bold 10px Inter, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(`+${diff}`, badgeX, badgeY);
+          ctx.restore();
+        }
 
         // Wedge outline
         ctx.strokeStyle = "rgba(0,0,0,0.15)";
@@ -252,7 +291,6 @@ export function TargetWheelCard({
         ctx.stroke();
 
         // Outer numbers
-        const midRad = startRad + angleStep / 2;
         const labelX = cx + (crOuter + 28) * Math.cos(midRad);
         const labelY = cy + (crOuter + 28) * Math.sin(midRad);
         
@@ -264,13 +302,14 @@ export function TargetWheelCard({
       });
     }
 
-    // Legend at bottom of chart
+    // Legend at bottom of chart with Growth explanation
     ctx.textAlign = "center";
     ctx.fillStyle = "#475569";
     ctx.font = "14px Inter, sans-serif";
     const currentText = lang === "en" ? "Current Status" : lang === "chm" ? "Кызытсе уровень" : lang === "sah" ? "БилиҥҤи таҺым" : "Текущий статус";
-    const growthText = lang === "en" ? "Target Growth Goal" : lang === "chm" ? "ВияҤмаш (Цель)" : lang === "sah" ? "Сайдыы (Сыал)" : "Целевой рост";
-    ctx.fillText(`●  ${currentText} (Сплошной)   |   ○  ${growthText} (Полупрозрачный)`, cx, cy + crOuter + 65);
+    const growthText = lang === "en" ? "Growth (Прирост +Δ)" : "Прирост (Рост +Δ)";
+    const targetText = lang === "en" ? "Target Goal" : "Целевая планка";
+    ctx.fillText(`●  ${currentText}   |   █  ${growthText}   |   --  ${targetText}`, cx, cy + crOuter + 65);
 
     // Right Side: Goals & Metrics Table
     const tx = 920;
@@ -285,7 +324,7 @@ export function TargetWheelCard({
     ctx.fillText("КРИТЕРИЙ", tx + 20, ty + 26);
     ctx.fillText("СЕЙЧАС", tx + 310, ty + 26);
     ctx.fillText("ЦЕЛЬ", tx + 400, ty + 26);
-    ctx.fillText("РОСТ", tx + 460, ty + 26);
+    ctx.fillText("ПРИРОСТ", tx + 455, ty + 26);
 
     criteria.forEach((crit, idx) => {
       ty += 46;
@@ -349,6 +388,15 @@ export function TargetWheelCard({
     );
     ctx.restore();
 
+    return canvas;
+  };
+
+  useImperativeHandle(ref, () => ({
+    getCanvas: drawTargetWheelCanvas,
+  }));
+
+  const exportTargetWheelPDF = () => {
+    const canvas = drawTargetWheelCanvas();
     const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
     const pdf = new jsPDF({
       orientation: "landscape",
@@ -641,4 +689,4 @@ export function TargetWheelCard({
       </div>
     </div>
   );
-}
+});

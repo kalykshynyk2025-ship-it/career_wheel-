@@ -31,3 +31,7 @@ export interface ThemeColors {
   secondary: string;
   accent: string;
 }
+
+export interface CanvasExportHandle {
+  getCanvas: () => HTMLCanvasElement;
+}

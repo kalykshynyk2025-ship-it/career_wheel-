@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
-import { Criterion } from "../types";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
+import { CanvasExportHandle, Criterion } from "../types";
 import { 
   Target, 
   Sparkles, 
@@ -89,14 +89,14 @@ const GET_STRATEGY = (score: number, target: number, lang: Language): { text: st
   }
 };
 
-export function CareerPlan({ 
+export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(function CareerPlan({ 
   criteria, 
   onChangeCriteria, 
   lang, 
   theme,
   activeUsername = "Guest",
   activeWheelTitle = "My Career Wheel"
-}: CareerPlanProps) {
+}: CareerPlanProps, ref) {
   const isDark = theme === "dark";
   const [expandedId, setExpandedId] = useState<string | null>(criteria[0]?.id || null);
   const t = TRANSLATIONS[lang];
@@ -127,9 +127,78 @@ export function CareerPlan({
 
   // Standalone high-quality canvas rendering engine for the plan matrix
   const drawPlanCanvas = (): HTMLCanvasElement => {
+    // Helper to calculate wrapped lines for text
+    const getWrappedTextLines = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+      const words = text.split(" ");
+      const lines: string[] = [];
+      let currentLine = "";
+
+      words.forEach((word) => {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      return lines.length > 0 ? lines : [text];
+    };
+
+    // Preliminary measurement canvas to compute exact dimensions
+    const testCanvas = document.createElement("canvas");
+    testCanvas.width = 1500;
+    const testCtx = testCanvas.getContext("2d");
+
+    const startX = 70;
+    const initialY = 195;
+    const cardWidth = 660;
+    const colGap = 40;
+    const rowGap = 25;
+
+    // Calculate row heights dynamically
+    const rowHeights: number[] = [];
+    const numRows = Math.ceil(criteria.length / 2);
+
+    for (let r = 0; r < numRows; r++) {
+      let maxH = 180;
+      for (let c = 0; c < 2; c++) {
+        const idx = r * 2 + c;
+        if (idx < criteria.length) {
+          const crit = criteria[idx];
+          const steps = crit.steps || [];
+          const validSteps = steps.filter((s) => s.trim().length > 0);
+          if (validSteps.length === 0) {
+            maxH = Math.max(maxH, 160);
+          } else {
+            let totalLines = 0;
+            if (testCtx) {
+              testCtx.font = "500 13px Inter, sans-serif";
+              validSteps.forEach((s) => {
+                const lines = getWrappedTextLines(testCtx, s, cardWidth - 80);
+                totalLines += lines.length;
+              });
+            } else {
+              totalLines = validSteps.length;
+            }
+            const computedH = 90 + totalLines * 22 + 15;
+            maxH = Math.max(maxH, computedH);
+          }
+        }
+      }
+      rowHeights.push(maxH);
+    }
+
+    const totalCriteriaHeight = rowHeights.reduce((acc, h) => acc + h + rowGap, 0);
+    const wheelsSectionHeight = 480;
+    const totalCanvasHeight = initialY + totalCriteriaHeight + wheelsSectionHeight + 70;
+
     const canvas = document.createElement("canvas");
     canvas.width = 1500;
-    canvas.height = 1600;
+    canvas.height = totalCanvasHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return canvas;
 
@@ -151,7 +220,7 @@ export function CareerPlan({
 
     ctx.fillStyle = "#64748B";
     ctx.font = "500 18px Inter, system-ui, sans-serif";
-    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : lang === "tyv" ? "tyv-RU" : "ru-RU";
     const dateStr = new Date().toLocaleDateString(localeStr, {
       year: "numeric",
       month: "long",
@@ -168,132 +237,127 @@ export function CareerPlan({
     ctx.lineTo(1430, 160);
     ctx.stroke();
 
-    const startX = 70;
-    const startY = 195;
-    const cardWidth = 660;
-    const cardHeight = 185;
-    const colGap = 40;
-    const rowGap = 20;
+    let currentY = initialY;
 
-    criteria.forEach((crit, i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = startX + col * (cardWidth + colGap);
-      const y = startY + row * (cardHeight + rowGap);
+    for (let r = 0; r < numRows; r++) {
+      const currentCardHeight = rowHeights[r];
 
-      if (y + cardHeight > 1020) return;
+      for (let c = 0; c < 2; c++) {
+        const i = r * 2 + c;
+        if (i >= criteria.length) break;
 
-      // Card Background with fine stroke
-      ctx.fillStyle = "#F8FAFC";
-      ctx.fillRect(x, y, cardWidth, cardHeight);
-      ctx.strokeStyle = "#E2E8F0";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x, y, cardWidth, cardHeight);
+        const crit = criteria[i];
+        const x = startX + c * (cardWidth + colGap);
+        const y = currentY;
 
-      // Gold highlight
-      ctx.fillStyle = "#C5A059";
-      ctx.fillRect(x, y, 6, cardHeight);
+        // Card Background with fine stroke
+        ctx.fillStyle = "#F8FAFC";
+        ctx.fillRect(x, y, cardWidth, currentCardHeight);
+        ctx.strokeStyle = "#E2E8F0";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x, y, cardWidth, currentCardHeight);
 
-      // Sphere counter badge
-      ctx.fillStyle = "#1E293B";
-      ctx.beginPath();
-      ctx.arc(x + 35, y + 35, 15, 0, 2 * Math.PI);
-      ctx.fill();
+        // Gold highlight
+        ctx.fillStyle = "#C5A059";
+        ctx.fillRect(x, y, 6, currentCardHeight);
 
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 13px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText((i + 1).toString(), x + 35, y + 39);
-      ctx.textAlign = "left";
+        // Sphere counter badge
+        ctx.fillStyle = "#1E293B";
+        ctx.beginPath();
+        ctx.arc(x + 35, y + 35, 15, 0, 2 * Math.PI);
+        ctx.fill();
 
-      // Sphere Title
-      ctx.fillStyle = "#1E293B";
-      ctx.font = "bold 16px Inter, sans-serif";
-      let nameText = crit.name;
-      const maxNameWidth = 400;
-      if (ctx.measureText(nameText).width > maxNameWidth) {
-        while (ctx.measureText(nameText + "...").width > maxNameWidth && nameText.length > 0) {
-          nameText = nameText.substring(0, nameText.length - 1);
-        }
-        nameText = nameText + "...";
-      }
-      ctx.fillText(nameText, x + 65, y + 41);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 13px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText((i + 1).toString(), x + 35, y + 39);
+        ctx.textAlign = "left";
 
-      // Scores (Now -> Target)
-      ctx.fillStyle = "#475569";
-      ctx.font = "bold 13px Inter, monospace";
-      const targetVal = crit.targetScore ?? crit.score;
-      const progressLabel = `${crit.score} → ${targetVal}`;
-      ctx.fillText(progressLabel, x + cardWidth - 80, y + 40);
-
-      // Strategy Label
-      const strategy = GET_STRATEGY(crit.score, targetVal, lang);
-      let strategyColor = "#C5A059";
-      if (targetVal > crit.score) {
-        strategyColor = "#10B981";
-      } else if (targetVal < crit.score) {
-        strategyColor = "#F59E0B";
-      } else {
-        strategyColor = "#475569";
-      }
-
-      ctx.fillStyle = strategyColor;
-      ctx.fillRect(x + 65, y + 54, 130, 18);
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 8px Inter, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(strategy.text.toUpperCase(), x + 65 + 65, y + 66);
-      ctx.textAlign = "left";
-
-      // Inner thin divider
-      ctx.strokeStyle = "#E2E8F0";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x + 20, y + 80);
-      ctx.lineTo(x + cardWidth - 20, y + 80);
-      ctx.stroke();
-
-      // Render actual steps
-      const steps = crit.steps || [];
-      const hasSteps = steps.some(s => s.trim() !== "");
-
-      if (!hasSteps) {
-        ctx.fillStyle = "#94A3B8";
-        ctx.font = "italic 12px Inter, sans-serif";
-        const emptyPlanStr = lang === "en" ? "No development action steps set for this sphere yet." : "Шаги развития для данной сферы пока не заполнены.";
-        ctx.fillText(emptyPlanStr, x + 35, y + 130);
-      } else {
-        let stepCount = 0;
-        steps.forEach((step, sIdx) => {
-          if (step.trim() && stepCount < 4) {
-            const stepY = y + 101 + stepCount * 20;
-            ctx.fillStyle = "#C5A059";
-            ctx.font = "bold 12px Inter, sans-serif";
-            ctx.fillText(`•`, x + 30, stepY);
-            ctx.fillStyle = "#334155";
-            ctx.font = "500 12px Inter, sans-serif";
-            
-            let sText = step;
-            const maxStepWidth = cardWidth - 75;
-            if (ctx.measureText(sText).width > maxStepWidth) {
-              while (ctx.measureText(sText + "...").width > maxStepWidth && sText.length > 0) {
-                sText = sText.substring(0, sText.length - 1);
-              }
-              sText = sText + "...";
-            }
-            ctx.fillText(sText, x + 45, stepY);
-            stepCount++;
+        // Sphere Title
+        ctx.fillStyle = "#1E293B";
+        ctx.font = "bold 16px Inter, sans-serif";
+        let nameText = crit.name;
+        const maxNameWidth = 380;
+        if (ctx.measureText(nameText).width > maxNameWidth) {
+          while (ctx.measureText(nameText + "...").width > maxNameWidth && nameText.length > 0) {
+            nameText = nameText.substring(0, nameText.length - 1);
           }
-        });
+          nameText = nameText + "...";
+        }
+        ctx.fillText(nameText, x + 65, y + 41);
+
+        // Scores (Now -> Target)
+        ctx.fillStyle = "#475569";
+        ctx.font = "bold 14px Inter, monospace";
+        const targetVal = crit.targetScore ?? crit.score;
+        const progressLabel = `${crit.score} → ${targetVal}`;
+        ctx.fillText(progressLabel, x + cardWidth - 85, y + 40);
+
+        // Strategy Label
+        const strategy = GET_STRATEGY(crit.score, targetVal, lang);
+        let strategyColor = "#C5A059";
+        if (targetVal > crit.score) {
+          strategyColor = "#10B981";
+        } else if (targetVal < crit.score) {
+          strategyColor = "#F59E0B";
+        } else {
+          strategyColor = "#475569";
+        }
+
+        ctx.fillStyle = strategyColor;
+        ctx.fillRect(x + 65, y + 52, 130, 18);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(strategy.text.toUpperCase(), x + 65 + 65, y + 64);
+        ctx.textAlign = "left";
+
+        // Inner thin divider
+        ctx.strokeStyle = "#E2E8F0";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y + 78);
+        ctx.lineTo(x + cardWidth - 20, y + 78);
+        ctx.stroke();
+
+        // Render actual steps completely without cut-offs
+        const steps = crit.steps || [];
+        const validSteps = steps.filter((s) => s.trim().length > 0);
+
+        if (validSteps.length === 0) {
+          ctx.fillStyle = "#94A3B8";
+          ctx.font = "italic 13px Inter, sans-serif";
+          const emptyPlanStr = lang === "en" ? "No development action steps set for this sphere yet." : "Шаги развития для данной сферы пока не заполнены.";
+          ctx.fillText(emptyPlanStr, x + 35, y + 115);
+        } else {
+          let lineY = y + 100;
+          validSteps.forEach((step, sIdx) => {
+            ctx.fillStyle = "#C5A059";
+            ctx.font = "bold 14px Inter, sans-serif";
+            ctx.fillText(`•`, x + 25, lineY);
+
+            ctx.fillStyle = "#1E293B";
+            ctx.font = "500 13px Inter, sans-serif";
+
+            const wrappedLines = getWrappedTextLines(ctx, step, cardWidth - 75);
+            wrappedLines.forEach((lineText, lIdx) => {
+              ctx.fillText(lineText, x + 40, lineY + lIdx * 20);
+            });
+            lineY += wrappedLines.length * 20 + 8;
+          });
+        }
       }
-    });
+
+      currentY += currentCardHeight + rowGap;
+    }
 
     // Draw a divider line above the wheels
+    const wheelsY = currentY + 20;
     ctx.strokeStyle = "#E2E8F0";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(70, 1020);
-    ctx.lineTo(1430, 1020);
+    ctx.moveTo(70, wheelsY);
+    ctx.lineTo(1430, wheelsY);
     ctx.stroke();
 
     // Wheel Title Headers
@@ -301,11 +365,11 @@ export function CareerPlan({
     ctx.font = "bold 20px Inter, sans-serif";
     ctx.textAlign = "center";
     
-    const currentWheelLabel = lang === "en" ? "CURRENT BALANCE" : lang === "chm" ? "КЫЗЫТСЕ БАЛАНС" : lang === "sah" ? "БИЛИҤҤИ ТЭҤНЭҺИК" : "ТЕКУЩИЙ БАЛАНС";
-    const targetWheelLabel = lang === "en" ? "TARGET GROWTH GOALS" : lang === "chm" ? "ВИЯҤМАШ ЦЕЛЬ-ВЛАК" : lang === "sah" ? "САЙДЫЫ СЫАЛЛАРА" : "ЦЕЛЕВОЙ РОСТ И ПЛАНЫ";
+    const currentWheelLabel = lang === "en" ? "CURRENT BALANCE" : lang === "chm" ? "КЫЗЫТСЕ БАЛАНС" : lang === "sah" ? "БИЛИҤҤИ ТЭҤНЭҺИК" : lang === "tyv" ? "АМГЫ ТЕҢНЕЛ" : "ТЕКУЩИЙ БАЛАНС";
+    const targetWheelLabel = lang === "en" ? "TARGET GROWTH GOALS" : lang === "chm" ? "ВИЯҤМАШ ЦЕЛЬ-ВЛАК" : lang === "sah" ? "САЙДЫЫ СЫАЛЛАРА" : lang === "tyv" ? "СОРУЛГА ДЕСКИНЧИГЕЖИ" : "ЦЕЛЕВОЙ РОСТ И ПЛАНЫ";
     
-    ctx.fillText(currentWheelLabel, 420, 1060);
-    ctx.fillText(targetWheelLabel, 1080, 1060);
+    ctx.fillText(currentWheelLabel, 420, wheelsY + 40);
+    ctx.fillText(targetWheelLabel, 1080, wheelsY + 40);
     ctx.textAlign = "left"; // reset
 
     const N = criteria.length;
@@ -383,15 +447,16 @@ export function CareerPlan({
       }
     };
 
-    drawSingleWheelOnCanvas(420, 1270, false);
-    drawSingleWheelOnCanvas(1080, 1270, true);
+    drawSingleWheelOnCanvas(420, wheelsY + 230, false);
+    drawSingleWheelOnCanvas(1080, wheelsY + 230, true);
 
     // Footnote
+    const footerY = wheelsY + 440;
     ctx.fillStyle = "#94A3B8";
     ctx.font = "12px Inter, sans-serif";
-    ctx.fillText(`${t.title} — Career Development Report`, 70, 1540);
+    ctx.fillText(`${t.title} — Career Development Report`, 70, footerY);
     ctx.textAlign = "right";
-    ctx.fillText("Сгенерировано локально и конфиденциально", 1430, 1540);
+    ctx.fillText("Сгенерировано локально и конфиденциально", 1430, footerY);
 
     // Draw Developer Credit Footer
     ctx.save();
@@ -410,6 +475,10 @@ export function CareerPlan({
 
     return canvas;
   };
+
+  useImperativeHandle(ref, () => ({
+    getCanvas: drawPlanCanvas,
+  }));
 
   const exportPlanPDF = () => {
     const canvas = drawPlanCanvas();
@@ -730,4 +799,4 @@ export function CareerPlan({
       )}
     </div>
   );
-}
+});

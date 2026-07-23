@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from "react";
+import { CanvasExportHandle } from "../types";
 import { Target, Plus, Trash2, RotateCcw, Download, FileDown, Sparkles, CheckCircle2, HelpCircle, FileText, Info } from "lucide-react";
 import { Language } from "../translations";
 import { jsPDF } from "jspdf";
@@ -121,6 +122,43 @@ const DEFAULT_ROWS_BY_LANG: Record<Language, GoalCategoryRow[]> = {
       longTerm: "Идеаллаах тэҥнэһик уонна усулуобуйа..."
     }
   ],
+  tyv: [
+    {
+      id: "row-1",
+      category: "1. Турум да ажыл олуду",
+      pointA: "Амгы должность, функциялар да харыысалга зоназы...",
+      mediumTerm: "",
+      longTerm: "5 чыл болгаш сорулга дуоһунас да удуртулга деңнели..."
+    },
+    {
+      id: "row-2",
+      category: "2. Орулга да акша деңнели",
+      pointA: "Амгы ниити орулга да бонустар...",
+      mediumTerm: "",
+      longTerm: "5 чыл болгаш күзээнин орулга деңнели..."
+    },
+    {
+      id: "row-3",
+      category: "3. Мергежил да сатабылдар",
+      pointA: "Амгы Hard & Soft skills, арга-дуржук...",
+      mediumTerm: "",
+      longTerm: "Кол компетенциялар, эксперт үнелел..."
+    },
+    {
+      id: "row-4",
+      category: "4. Ажыл шарттары да теңнел",
+      pointA: "Амгы график, ажыглал хевири, стресс деңнели...",
+      mediumTerm: "",
+      longTerm: "Идеалдыг ажыл да чуртталга теңнели..."
+    },
+    {
+      id: "row-5",
+      category: "5. Проекттер да четишишкиннер",
+      pointA: "Амгы кылып турар проекттер да ажылдар...",
+      mediumTerm: "",
+      longTerm: "Улуг ужур-уткалыг четишишкиннер..."
+    }
+  ],
   en: [
     {
       id: "row-1",
@@ -162,7 +200,7 @@ const DEFAULT_ROWS_BY_LANG: Record<Language, GoalCategoryRow[]> = {
 
 const STORAGE_KEY = "career_goals_table_data_v1";
 
-export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle }: CareerGoalsTableProps) {
+export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableProps>(function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle }: CareerGoalsTableProps, ref) {
   const isDark = theme === "dark";
 
   const [rows, setRows] = useState<GoalCategoryRow[]>(() => {
@@ -219,13 +257,59 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
     }
   };
 
-  const exportTablePDF = () => {
+  const drawTableCanvas = (): HTMLCanvasElement => {
+    // Helper function for wrapped text lines calculation
+    const getWrappedLines = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+      if (!text || !text.trim()) return ["—"];
+      const words = text.split(" ");
+      const lines: string[] = [];
+      let currentLine = "";
+
+      words.forEach((word) => {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+      return lines.length > 0 ? lines : [text];
+    };
+
+    // Test canvas to measure row heights accurately
+    const testCanvas = document.createElement("canvas");
+    testCanvas.width = 1500;
+    const testCtx = testCanvas.getContext("2d");
+
+    const startX = 70;
+    const initialY = 240; // after headers
+    const rowGap = 15;
+
+    const rowHeights: number[] = [];
+    rows.forEach((row) => {
+      if (testCtx) {
+        testCtx.font = "13px Inter, sans-serif";
+        const lines1 = getWrappedLines(testCtx, row.pointA, 410);
+        const lines2 = getWrappedLines(testCtx, row.mediumTerm, 410);
+        const lines3 = getWrappedLines(testCtx, row.longTerm, 410);
+        const maxLines = Math.max(lines1.length, lines2.length, lines3.length, 1);
+        const computedH = Math.max(130, 45 + maxLines * 20 + 20);
+        rowHeights.push(computedH);
+      } else {
+        rowHeights.push(140);
+      }
+    });
+
+    const totalRowsHeight = rowHeights.reduce((acc, h) => acc + h + rowGap, 0);
+    const canvasHeight = initialY + totalRowsHeight + 100;
+
     const canvas = document.createElement("canvas");
     canvas.width = 1500;
-    const rowHeight = 160;
-    canvas.height = 280 + rows.length * rowHeight;
+    canvas.height = canvasHeight;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) return canvas;
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
@@ -245,7 +329,7 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
 
     ctx.fillStyle = "#64748B";
     ctx.font = "500 18px Inter, system-ui, sans-serif";
-    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : lang === "tyv" ? "tyv-RU" : "ru-RU";
     const dateStr = new Date().toLocaleDateString(localeStr, {
       year: "numeric",
       month: "long",
@@ -261,7 +345,6 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
     ctx.lineTo(1430, 155);
     ctx.stroke();
 
-    const startX = 70;
     let startY = 185;
 
     // Table Headers
@@ -282,62 +365,48 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
 
     startY += 55;
 
-    // Helper function for wrapped text rendering
-    const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
-      if (!text) return;
-      const words = text.split(" ");
-      let line = "";
-      let currentY = y;
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + " ";
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxWidth && n > 0) {
-          ctx.fillText(line, x, currentY);
-          line = words[n] + " ";
-          currentY += lineHeight;
-          if (currentY > y + 80) { // cap height
-            ctx.fillText(line + "...", x, currentY);
-            return;
-          }
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, x, currentY);
-    };
-
     // Table Rows
     rows.forEach((row, rIdx) => {
+      const currentH = rowHeights[rIdx];
+
       ctx.fillStyle = rIdx % 2 === 1 ? "#F8FAFC" : "#FFFFFF";
-      ctx.fillRect(startX, startY, 1360, 140);
+      ctx.fillRect(startX, startY, 1360, currentH);
       ctx.strokeStyle = "#E2E8F0";
       ctx.lineWidth = 1.5;
-      ctx.strokeRect(startX, startY, 1360, 140);
+      ctx.strokeRect(startX, startY, 1360, currentH);
 
       // Gold vertical strip
       ctx.fillStyle = "#C5A059";
-      ctx.fillRect(startX, startY, 5, 140);
+      ctx.fillRect(startX, startY, 5, currentH);
 
       // Category Header inside row
       ctx.fillStyle = "#1E293B";
       ctx.font = "bold 15px Inter, sans-serif";
       ctx.fillText(row.category, startX + 20, startY + 28);
 
-      // Column 1 text
+      // Render columns text cleanly wrapped
       ctx.fillStyle = "#334155";
       ctx.font = "13px Inter, sans-serif";
-      wrapText(row.pointA || "—", startX + 20, startY + 58, 410, 18);
 
-      // Column 2 text
-      wrapText(row.mediumTerm || "—", startX + 470, startY + 58, 410, 18);
+      const linesCol1 = getWrappedLines(ctx, row.pointA, 410);
+      linesCol1.forEach((l, idx) => {
+        ctx.fillText(l, startX + 20, startY + 54 + idx * 20);
+      });
 
-      // Column 3 text
-      wrapText(row.longTerm || "—", startX + 920, startY + 58, 410, 18);
+      const linesCol2 = getWrappedLines(ctx, row.mediumTerm, 410);
+      linesCol2.forEach((l, idx) => {
+        ctx.fillText(l, startX + 470, startY + 54 + idx * 20);
+      });
 
-      startY += 155;
+      const linesCol3 = getWrappedLines(ctx, row.longTerm, 410);
+      linesCol3.forEach((l, idx) => {
+        ctx.fillText(l, startX + 920, startY + 54 + idx * 20);
+      });
+
+      startY += currentH + rowGap;
     });
 
-    // Draw Developer Credit Footer on Every Page
+    // Draw Developer Credit Footer
     ctx.save();
     ctx.fillStyle = "#0A0A0B";
     ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
@@ -352,6 +421,15 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
     );
     ctx.restore();
 
+    return canvas;
+  };
+
+  useImperativeHandle(ref, () => ({
+    getCanvas: drawTableCanvas,
+  }));
+
+  const exportTablePDF = () => {
+    const canvas = drawTableCanvas();
     const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
     const pdf = new jsPDF({
       orientation: "landscape",
@@ -360,7 +438,8 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
     });
     pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, canvas.height, undefined, "FAST");
 
-    pdf.save(`career_goals_table_${Date.now()}.pdf`);
+    const sanitizedTitle = (activeWheelTitle || "goals").toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
+    pdf.save(`career_goals_table_${sanitizedTitle}.pdf`);
   };
 
   return (
@@ -619,4 +698,4 @@ export function CareerGoalsTable({ lang, theme, activeUsername, activeWheelTitle
       )}
     </div>
   );
-}
+});

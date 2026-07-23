@@ -55,7 +55,7 @@ export function History({
     const height = 150;
     const padding = 30;
 
-    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : lang === "tyv" ? "tyv-RU" : "ru-RU";
     const dataPoints = sortedWheelsOldestFirst.map((wheel) => ({
       title: wheel.title,
       avg: parseFloat(getAverage(wheel)),

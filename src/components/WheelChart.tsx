@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useState } from "react";
-import { Criterion } from "../types";
+import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { CanvasExportHandle, Criterion } from "../types";
 import { Download, FileDown, Layers, Sparkles } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { motion, AnimatePresence } from "motion/react";
@@ -72,7 +72,7 @@ const wrapText = (text: string, maxLength = 14): string[] => {
   return lines;
 };
 
-export function WheelChart({
+export const WheelChart = forwardRef<CanvasExportHandle, WheelChartProps>(function WheelChart({
   criteria,
   compareCriteria,
   compareTitle,
@@ -86,7 +86,7 @@ export function WheelChart({
   colorRoutine,
   colorComfort,
   colorPeak,
-}: WheelChartProps) {
+}: WheelChartProps, ref) {
   const t = TRANSLATIONS[lang];
   const isDark = theme === "dark";
   const activeUsername = username || (lang === "en" ? "Guest" : lang === "chm" ? "Уна" : lang === "sah" ? "Ыалдьыт" : "Гость");
@@ -239,7 +239,7 @@ export function WheelChart({
 
     ctx.fillStyle = "#64748B";
     ctx.font = "500 20px Inter, system-ui, sans-serif";
-    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : "ru-RU";
+    const localeStr = lang === "en" ? "en-US" : lang === "chm" ? "chm-RU" : lang === "sah" ? "sah-RU" : lang === "tyv" ? "tyv-RU" : "ru-RU";
     const dateStr = new Date().toLocaleDateString(localeStr, {
       year: "numeric",
       month: "long",
@@ -247,7 +247,7 @@ export function WheelChart({
     });
     const labelUser = t.userLabel;
     const labelTitle = t.wheelTitleLabel;
-    const labelDate = lang === "en" ? "Date" : lang === "chm" ? "Кече" : lang === "sah" ? "Күнэ" : "Дата";
+    const labelDate = lang === "en" ? "Date" : lang === "chm" ? "Кече" : lang === "sah" ? "Күнэ" : lang === "tyv" ? "Хүнү" : "Дата";
     ctx.fillText(`${labelUser}: ${activeUsername}  |  ${labelTitle}: ${activeWheelTitle}  |  ${labelDate}: ${dateStr}`, 70, 130);
 
     // Divider Line
@@ -367,8 +367,8 @@ export function WheelChart({
     ctx.fillText(avg, ccx, ccy + 2);
     ctx.font = "bold 11px Inter, uppercase";
     ctx.fillStyle = "#C5A059";
-    const labelAvgLine1 = lang === "en" ? "AVERAGE" : lang === "chm" ? "КЫДАЛАШ" : lang === "sah" ? "ОРТО" : "СРЕДНИЙ";
-    const labelAvgLine2 = lang === "en" ? "SCORE" : lang === "chm" ? "БАЛЛ" : lang === "sah" ? "БААЛ" : "БАЛЛ";
+    const labelAvgLine1 = lang === "en" ? "AVERAGE" : lang === "chm" ? "КЫДАЛАШ" : lang === "sah" ? "ОРТО" : lang === "tyv" ? "ОРТАА" : "СРЕДНИЙ";
+    const labelAvgLine2 = lang === "en" ? "SCORE" : lang === "chm" ? "БАЛЛ" : lang === "sah" ? "БААЛ" : lang === "tyv" ? "ДЕМДЕК" : "БАЛЛ";
     ctx.fillText(labelAvgLine1, ccx, ccy - 18);
     ctx.fillText(labelAvgLine2, ccx, ccy + 18);
 
@@ -462,11 +462,11 @@ export function WheelChart({
 
       ctx.fillStyle = "#C2410C";
       ctx.font = "bold 13px Inter, uppercase";
-      const labelComparison = lang === "en" ? "COMPARISON:" : lang === "chm" ? "ТАҤАСТАРЫМАШ:" : lang === "sah" ? "ТЭҤНЭЭҺИН:" : "СРАВНЕНИЕ:";
+      const labelComparison = lang === "en" ? "COMPARISON:" : lang === "chm" ? "ТАҤАСТАРЫМАШ:" : lang === "sah" ? "ТЭҤНЭЭҺИН:" : lang === "tyv" ? "ДЕҢНЕП КӨРҮҮШҮК:" : "СРАВНЕНИЕ:";
       ctx.fillText(`${labelComparison} ${compareTitle || t.prevMeasurement}`, tx + 15, ty + 25);
       ctx.fillStyle = "#4A0404";
       ctx.font = "14px Inter, sans-serif";
-      const labelCompDesc = lang === "en" ? "Shown on the chart as a dotted golden line" : lang === "chm" ? "Колесошто оранжевый пунктир линий дене ончыктымо" : lang === "sah" ? "Эргимтэҕэ оранжевай сурааһынынан көрдөрүлүннэ" : "Отображено на диаграмме оранжевой пунктирной линией";
+      const labelCompDesc = lang === "en" ? "Shown on the chart as a dotted golden line" : lang === "chm" ? "Колесошто оранжевый пунктир линий дене ончыктымо" : lang === "sah" ? "Эргимтэҕэ оранжевай сурааһынынан көрдөрүлүннэ" : lang === "tyv" ? "Дескинчигешке оранжевый пунктир ортсы-биле көргүстүнген" : "Отображено на диаграмме оранжевой пунктирной линией";
       ctx.fillText(labelCompDesc, tx + 15, ty + 45);
     }
 
@@ -769,6 +769,10 @@ export function WheelChart({
 
     return canvas;
   };
+
+  useImperativeHandle(ref, () => ({
+    getCanvas: drawCanvas,
+  }));
 
   // Trigger Local PDF Report Export
   const exportPDF = () => {
@@ -1096,4 +1100,4 @@ export function WheelChart({
       )}
     </div>
   );
-}
+});

@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
-import { Criterion, SavedWheel, User } from "./types";
+import React, { useState, useEffect, useRef } from "react";
+import { CanvasExportHandle, Criterion, SavedWheel, User } from "./types";
+import { jsPDF } from "jspdf";
 import { Auth } from "./components/Auth";
 import { WheelChart } from "./components/WheelChart";
 import { WheelEditor } from "./components/WheelEditor";
@@ -26,7 +27,9 @@ import {
   Moon,
   Palette,
   RotateCcw,
-  ExternalLink
+  ExternalLink,
+  Download,
+  FileDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -45,11 +48,33 @@ export default function App() {
   const [lang, setLang] = useState<Language>("ru");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showAuth, setShowAuth] = useState(false);
-  const [criteria, setCriteria] = useState<Criterion[]>(DEFAULT_CRITERIA);
-  const [wheelTitle, setWheelTitle] = useState("Мой Карьерный Компас");
+  const [criteria, setCriteria] = useState<Criterion[]>(() => {
+    try {
+      const saved = localStorage.getItem("career_wheel_current_criteria");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (err) {
+      console.error("Failed to parse saved criteria:", err);
+    }
+    return DEFAULT_CRITERIA;
+  });
+  const [wheelTitle, setWheelTitle] = useState<string>(() => {
+    return localStorage.getItem("career_wheel_current_title") || "Мой Карьерный Компас";
+  });
   const [savedWheels, setSavedWheels] = useState<SavedWheel[]>([]);
   const [compareWheel, setCompareWheel] = useState<SavedWheel | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Sync criteria and title to localstorage for page refresh persistence
+  useEffect(() => {
+    localStorage.setItem("career_wheel_current_criteria", JSON.stringify(criteria));
+  }, [criteria]);
+
+  useEffect(() => {
+    localStorage.setItem("career_wheel_current_title", wheelTitle);
+  }, [wheelTitle]);
 
   // Theme support state (persisted)
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -115,13 +140,107 @@ export default function App() {
         setWheelTitle("Мыйын карьер компасем");
       } else if (lang === "sah") {
         setWheelTitle("Мин Карьерам Компаһа");
+      } else if (lang === "tyv") {
+        setWheelTitle("Мээң Карьер Компазым");
       } else {
         setWheelTitle("Мой Карьерный Компас");
       }
     }
   }, [lang]);
 
-  // Load user session and saved wheels on mount
+  // Component refs for unified master PDF export
+  const wheelChartRef = useRef<CanvasExportHandle>(null);
+  const targetWheelRef = useRef<CanvasExportHandle>(null);
+  const careerPlanRef = useRef<CanvasExportHandle>(null);
+  const careerGoalsTableRef = useRef<CanvasExportHandle>(null);
+
+  const [isExportingFull, setIsExportingFull] = useState(false);
+
+  // Master Export of all filled blocks as a single unified PDF
+  const handleExportFullReportPDF = async () => {
+    try {
+      setIsExportingFull(true);
+      const startToastStr = lang === "en" 
+        ? "Generating full multi-page PDF report..." 
+        : lang === "chm" 
+          ? "Икшыле PDF-отчетым ямдылымаш..." 
+          : lang === "sah" 
+            ? "Биир кэлим PDF отчуоту дьаһайыы..." 
+            : lang === "tyv" 
+              ? "Ниити PDF-отчетту кылып турар..." 
+              : "Формирование единого PDF-отчета всех блоков...";
+      triggerToast(startToastStr);
+
+      await new Promise((res) => setTimeout(res, 100));
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [1500, 1100],
+      });
+
+      let pageAdded = false;
+
+      // Page 1: Current Wheel Chart
+      if (wheelChartRef.current) {
+        const canvas1 = wheelChartRef.current.getCanvas();
+        if (canvas1) {
+          const dataUrl = canvas1.toDataURL("image/jpeg", 0.95);
+          pdf.addImage(dataUrl, "JPEG", 0, 0, 1500, canvas1.height, undefined, "FAST");
+          pageAdded = true;
+        }
+      }
+
+      // Page 2: Target Wheel Card (with Growth Deltas)
+      if (targetWheelRef.current) {
+        const canvas2 = targetWheelRef.current.getCanvas();
+        if (canvas2) {
+          if (pageAdded) pdf.addPage([1500, canvas2.height], "landscape");
+          pdf.addImage(canvas2.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 1500, canvas2.height, undefined, "FAST");
+          pageAdded = true;
+        }
+      }
+
+      // Page 3: Individual Career Plan Matrix
+      if (careerPlanRef.current) {
+        const canvas3 = careerPlanRef.current.getCanvas();
+        if (canvas3) {
+          if (pageAdded) pdf.addPage([1500, canvas3.height], "landscape");
+          pdf.addImage(canvas3.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 1500, canvas3.height, undefined, "FAST");
+          pageAdded = true;
+        }
+      }
+
+      // Page 4: Career Goals Table
+      if (careerGoalsTableRef.current) {
+        const canvas4 = careerGoalsTableRef.current.getCanvas();
+        if (canvas4) {
+          if (pageAdded) pdf.addPage([1500, canvas4.height], "landscape");
+          pdf.addImage(canvas4.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, 1500, canvas4.height, undefined, "FAST");
+          pageAdded = true;
+        }
+      }
+
+      const sanitizedTitle = (wheelTitle || "career_portfolio").toLowerCase().replace(/[^a-z0-9а-яё]/gi, "_");
+      pdf.save(`full_career_portfolio_${sanitizedTitle}.pdf`);
+
+      const finishToastStr = lang === "en" 
+        ? "Full PDF portfolio exported successfully!" 
+        : lang === "chm" 
+          ? "Икшыле PDF-портфолио аралалтын!" 
+          : lang === "sah" 
+            ? "Биир кэлим PDF отчуот уурулунна!" 
+            : lang === "tyv" 
+              ? "Ниити PDF-отчет ачыртылынна!" 
+              : "Единый PDF-отчет всех блоков успешно сохранен!";
+      triggerToast(finishToastStr);
+    } catch (err) {
+      console.error("Export full report error:", err);
+      triggerToast(lang === "en" ? "Failed to export PDF" : "Ошибка при создании единого PDF");
+    } finally {
+      setIsExportingFull(false);
+    }
+  };
   useEffect(() => {
     const cachedUser = localStorage.getItem("career_wheel_current_user");
     if (cachedUser) {
@@ -346,6 +465,7 @@ export default function App() {
                   <option value="ru" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Русский</option>
                   <option value="chm" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Марий йылме</option>
                   <option value="sah" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Саха тыла</option>
+                  <option value="tyv" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">Тыва дыл</option>
                   <option value="en" className="bg-[#0D0D0F] dark:bg-[#0D0D0F] text-zinc-900 dark:text-white">English</option>
                 </select>
               </div>
@@ -468,6 +588,7 @@ export default function App() {
                   
                   {/* Visualizer Component */}
                   <WheelChart
+                    ref={wheelChartRef}
                     criteria={criteria}
                     compareCriteria={compareWheel?.criteria}
                     compareTitle={compareWheel?.title}
@@ -712,6 +833,7 @@ export default function App() {
 
               {/* Target Career Balance Wheel (Goals) */}
               <TargetWheelCard
+                ref={targetWheelRef}
                 criteria={criteria}
                 onChangeCriteria={setCriteria}
                 lang={lang}
@@ -726,6 +848,7 @@ export default function App() {
 
               {/* Individual Career Development Plan Section (IDP) */}
               <CareerPlan
+                ref={careerPlanRef}
                 criteria={criteria}
                 onChangeCriteria={setCriteria}
                 lang={lang}
@@ -736,11 +859,61 @@ export default function App() {
 
               {/* Career Goals Assignment Table */}
               <CareerGoalsTable
+                ref={careerGoalsTableRef}
                 lang={lang}
                 theme={theme === "dark" || theme === "light" ? theme : "light"}
                 activeUsername={currentUser ? currentUser.username : undefined}
                 activeWheelTitle={wheelTitle}
               />
+
+              {/* Master Full Document PDF Export Banner */}
+              <div className={`rounded-2xl border p-6 sm:p-8 shadow-2xl transition-all duration-200 relative overflow-hidden ${
+                isDark 
+                  ? "border-[#C5A059]/30 bg-gradient-to-r from-[#0F0F12] via-[#1A1813] to-[#0F0F12]" 
+                  : "border-[#C5A059]/40 bg-gradient-to-r from-amber-500/5 via-[#C5A059]/10 to-amber-500/5"
+              }`}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#C5A059] text-[#0A0A0B] shadow-lg shadow-[#C5A059]/20 font-bold">
+                      <FileDown className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-mono uppercase tracking-widest font-bold px-2 py-0.5 rounded bg-[#C5A059]/20 text-[#DFC182] border border-[#C5A059]/30">
+                          PDF PORTFOLIO
+                        </span>
+                      </div>
+                      <h3 className={`text-xl font-bold font-serif ${isDark ? "text-white" : "text-zinc-900"}`}>
+                        {lang === "en" ? "Unified Career Portfolio Export" : lang === "chm" ? "Икшыле карьер портфолио экспорт" : lang === "sah" ? "Биир кэлим карьера портфолиотын экспорт" : lang === "tyv" ? "Ниити карьер портфолио экспорт" : "Единый экспорт карьерного портфолио"}
+                      </h3>
+                      <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${isDark ? "text-white/60" : "text-zinc-600"}`}>
+                        {lang === "en" 
+                          ? "Download all filled sections (Current Balance Wheel, Target Growth Wheel, Action Plan, and Goals Table) in a single unified multi-page PDF document."
+                          : lang === "chm"
+                            ? "Чыла темыме блокым (кылмыше орава, кушмо орава, вияҥме план да целей таблице) ик тичмаш PDF документ дене сӧран каяш."
+                            : lang === "sah"
+                              ? "Билиҥҥи таһым эргимтэтин, сыал эргимтэтин, сайдыы планын уонна соруктар таблицаларын биир кэлим PDF докумуоҥҥа уурунуу."
+                              : lang === "tyv"
+                                ? "Бүгү долдурткан блокторну (Амгы дескинчигеш, Сорулгалар дескинчигежи, План угаана уонна Таблица) чаңгыс PDF документиге киирип хошуп алыр."
+                                : "Скачать все заполненные блоки (Текущее колесо баланса, Колесо целей с приростом, Индивидуальный план развития и Таблицу целей) единым документом PDF."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleExportFullReportPDF}
+                    disabled={isExportingFull}
+                    className="w-full md:w-auto shrink-0 flex items-center justify-center gap-2 rounded-xl bg-[#C5A059] px-6 py-4 text-sm font-bold text-[#0A0A0B] shadow-xl hover:bg-[#DFC182] active:scale-95 transition-all cursor-pointer border border-[#DFC182] disabled:opacity-50"
+                  >
+                    <Download className="h-5 w-5" />
+                    <span>
+                      {isExportingFull
+                        ? (lang === "en" ? "Exporting..." : "Экспорт выполняется...")
+                        : (lang === "en" ? "Export All Blocks in One Document (PDF)" : "Экспортировать все блоки одним документом (PDF)")}
+                    </span>
+                  </button>
+                </div>
+              </div>
 
               {/* Bottom Row: History Timeline (Full Width) */}
               <div className={`border-t pt-8 ${isDark ? "border-white/5" : "border-zinc-200"}`}>

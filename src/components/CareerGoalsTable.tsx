@@ -325,7 +325,16 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
     // Header Title
     ctx.fillStyle = "#1E293B";
     ctx.font = "bold 30px Inter, system-ui, sans-serif";
-    ctx.fillText("КАРЬЕРНЫЕ ЦЕЛИ РАЗВИТИЯ КАРЬЕРНЫХ КРИТЕРИЕВ", 70, 85);
+    const canvasGoalsTitle = lang === "en"
+      ? "CAREER CRITERIA DEVELOPMENT GOALS"
+      : lang === "chm"
+        ? "КАРЬЕР КРИТЕРИЙ-ВЛАКЫН ВИЯҤМЕ ЦЕЛЬЖЕ"
+        : lang === "sah"
+          ? "КАРЬЕРА ХАЙЫСХАЛАРЫН САЙЫННАРЫЫ СЫАЛЛАРА"
+          : lang === "tyv"
+            ? "КАРЬЕР КРИТЕРИЙЛЕРИНИҢ ӨЗЕЛИНИҢ СОРУЛГАЛАРА"
+            : "КАРЬЕРНЫЕ ЦЕЛИ РАЗВИТИЯ КАРЬЕРНЫХ КРИТЕРИЕВ";
+    ctx.fillText(canvasGoalsTitle, 70, 85);
 
     ctx.fillStyle = "#64748B";
     ctx.font = "500 18px Inter, system-ui, sans-serif";
@@ -335,7 +344,9 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
       month: "long",
       day: "numeric",
     });
-    ctx.fillText(`Замер: ${activeWheelTitle || "Мое колесо карьеры"}  |  Дата: ${dateStr}`, 70, 125);
+    const labelMeasure = lang === "en" ? "Assessment" : lang === "chm" ? "Висымаш" : lang === "sah" ? "Сыанабыл" : lang === "tyv" ? "Хемчээшкин" : "Замер";
+    const labelDate = lang === "en" ? "Date" : lang === "chm" ? "Кече" : lang === "sah" ? "Күнэ-дьыла" : lang === "tyv" ? "Хүнү" : "Дата";
+    ctx.fillText(`${labelMeasure}: ${activeWheelTitle || "Мое колесо карьеры"}  |  ${labelDate}: ${dateStr}`, 70, 125);
 
     // Separator line
     ctx.strokeStyle = "#F1F5F9";
@@ -349,9 +360,9 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
 
     // Table Headers
     const headers = [
-      lang === "en" ? "1. Today - Point A" : "1. Сегодня — Пункт А",
-      lang === "en" ? "2. 2–3 Years (Medium)" : "2. 2–3 года",
-      lang === "en" ? "3. 4–5 Years (Target Goals)" : "3. 4–5 лет (Цели)"
+      lang === "en" ? "1. Today - Point A" : lang === "chm" ? "1. Таче — Пункт А" : lang === "sah" ? "1. Билиҥҥэ — А пуун" : lang === "tyv" ? "1. Бөгүн — А чук" : "1. Сегодня — Пункт А",
+      lang === "en" ? "2. 2–3 Years (Medium)" : lang === "chm" ? "2. 2–3 ий" : lang === "sah" ? "2. 2–3 сыл" : lang === "tyv" ? "2. 2–3 чыл" : "2. 2–3 года",
+      lang === "en" ? "3. 4–5 Years (Target Goals)" : lang === "chm" ? "3. 4–5 ий (Цель-влак)" : lang === "sah" ? "3. 4–5 сыл (Сыаллар)" : lang === "tyv" ? "3. 4–5 чыл (Сорулгалар)" : "3. 4–5 лет (Цели)"
     ];
 
     ctx.fillStyle = "#1E293B";
@@ -414,8 +425,17 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
     ctx.font = "bold 14px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    const devCreditLabel = lang === "en"
+      ? "Tool Developer"
+      : lang === "chm"
+        ? "Инструментым ямдылыше"
+        : lang === "sah"
+          ? "Тэрили оҥорооччу"
+          : lang === "tyv"
+            ? "Херекселдиң чогаадыкчызы"
+            : "Разработчик инструмента";
     ctx.fillText(
-      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      `${devCreditLabel}: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)`,
       canvas.width / 2,
       canvas.height - 25
     );
@@ -454,12 +474,26 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
           </div>
           <div>
             <h3 className={`text-base sm:text-lg font-light font-serif tracking-tight leading-tight ${isDark ? "text-white" : "text-zinc-900"}`}>
-              {lang === "en" ? "Career Goals Projections" : "Карьерные цели развития карьерных критериев"}
+              {lang === "en" 
+                ? "Career Goals Projections" 
+                : lang === "chm"
+                  ? "Карьер критерий-влакын вияҤме цельже"
+                  : lang === "sah"
+                    ? "Карьера хайысхаларын сайыннарыы сыаллара"
+                    : lang === "tyv"
+                      ? "Карьер критерийлериниң өзелинин сорулгалары"
+                      : "Карьерные цели развития карьерных критериев"}
             </h3>
             <p className={`text-xs mt-0.5 ${isDark ? "text-white/40" : "text-zinc-500"}`}>
               {lang === "en" 
                 ? "Formulate your career trajectory: Current state vs 5-year goal projection" 
-                : "Формирование вашей карьерной траектории: Статус «Сегодня» и ориентиры «Через 5 лет»"}
+                : lang === "chm"
+                  ? "Шке карьер корным чоҥымаш: «Таче» статус да «5 ий гыч» ориентир"
+                  : lang === "sah"
+                    ? "Карьера траекториятын оҥоруу: «Билиҥҥи» турук уонна «5 сылынан» сыаллар"
+                    : lang === "tyv"
+                      ? "Карьер орууңарны тургузары: «Бөгүн» байдалы да «5 чыл болгаш» сорулгалар"
+                      : "Формирование вашей карьерной траектории: Статус «Сегодня» и ориентиры «Через 5 лет»"}
             </p>
           </div>
         </div>
@@ -470,7 +504,17 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
             className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition cursor-pointer active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>{lang === "en" ? "Add Category" : "Добавить категорию"}</span>
+            <span>
+              {lang === "en" 
+                ? "Add Category" 
+                : lang === "chm" 
+                  ? "Категорийым ешараш" 
+                  : lang === "sah" 
+                    ? "Категория ууруу" 
+                    : lang === "tyv" 
+                      ? "Категория немеп алыр" 
+                      : "Добавить категорию"}
+            </span>
           </button>
 
           <button
@@ -503,33 +547,93 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
           <Info className="h-5 w-5 text-[#C5A059] shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed space-y-1.5">
             <p className="font-bold text-[#DFC182] text-sm">
-              {lang === "en" ? "Career Goals Guidelines" : "Карьерные цели развития карьерных критериев"}
+              {lang === "en" 
+                ? "Career Goals Guidelines" 
+                : lang === "chm" 
+                  ? "Карьер критерий-влакын вияҤме цельже" 
+                  : lang === "sah" 
+                    ? "Карьера хайысхаларын сайыннарыы сыаллара" 
+                    : lang === "tyv" 
+                      ? "Карьер критерийлериниң өзелинин сорулгалары" 
+                      : "Карьерные цели развития карьерных критериев"}
             </p>
             <p className={isDark ? "text-white/80" : "text-zinc-700"}>
               {lang === "en"
                 ? "Create a table with your career goals consisting of three columns:"
-                : "Создайте таблицу с вашими карьерными целями, состоящую из трех столбцов:"}
+                : lang === "chm"
+                  ? "Шке карьер цель-влак дене кылме кум столбцан таблицым возыза:"
+                  : lang === "sah"
+                    ? "Үс анал графалаах карьера сыалларын таблицатын толоруҥ:"
+                    : lang === "tyv"
+                      ? "Үш бажыңныг карьер сорулгаларының таблицазын тургузуңар:"
+                      : "Создайте таблицу с вашими карьерными целями, состоящую из трех столбцов:"}
             </p>
             <ul className="list-disc pl-4 space-y-1 text-[11px] font-medium">
               <li>
                 <strong className="text-[#C5A059]">
-                  {lang === "en" ? "Column 1 (Today - Point A):" : "В первом столбце (Сегодня - Пункт А):"}
+                  {lang === "en" 
+                    ? "Column 1 (Today - Point A):" 
+                    : lang === "chm" 
+                      ? "Икымше столбцышто (Таче - Пункт А):" 
+                      : lang === "sah" 
+                        ? "Маҥнайгы графаҕа (Билиҥҥэ - А пуун):" 
+                        : lang === "tyv" 
+                          ? "Баштапкы бажыңга (Бөгүн - А чук):" 
+                          : "В первом столбце (Сегодня - Пункт А):"}
                 </strong>{" "}
-                {lang === "en" ? "Describe your current career status, role, income, and balance." : "опишите свой текущий карьерный статус."}
+                {lang === "en" 
+                  ? "Describe your current career status, role, income, and balance." 
+                  : lang === "chm"
+                    ? "кызытсе карьер статусым возыза."
+                    : lang === "sah"
+                      ? "билиҥҥи туруккутун суруйуҥ."
+                      : lang === "tyv"
+                        ? "амгы карьер байдалыңарны бижиңер."
+                        : "опишите свой текущий карьерный статус."}
               </li>
               <li>
                 <strong className="text-white/50">
-                  {lang === "en" ? "Column 2 (2–3 years):" : "Второй столбец (2-3 года):"}
+                  {lang === "en" 
+                    ? "Column 2 (2–3 years):" 
+                    : lang === "chm" 
+                      ? "Кокымшо столбец (2-3 ий):" 
+                      : lang === "sah" 
+                        ? "Иккис графа (2-3 сыл):" 
+                        : lang === "tyv" 
+                          ? "Ийиги бажың (2-3 чыл):" 
+                          : "Второй столбец (2-3 года):"}
                 </strong>{" "}
-                {lang === "en" ? "Leave empty for now (reserved for medium-term check-in)." : "пока оставьте пустым."}
+                {lang === "en" 
+                  ? "Leave empty for now (reserved for medium-term check-in)." 
+                  : lang === "chm"
+                    ? "кызытлан яра кодыза."
+                    : lang === "sah"
+                      ? "кураанах хаалларыҥ."
+                      : lang === "tyv"
+                        ? "амдыгаагар куруг арттырыңар."
+                        : "пока оставьте пустым."}
               </li>
               <li>
                 <strong className="text-emerald-400">
-                  {lang === "en" ? "Column 3 (4–5 years):" : "В третьем столбце (4-5 лет):"}
+                  {lang === "en" 
+                    ? "Column 3 (4–5 years):" 
+                    : lang === "chm" 
+                      ? "Кумшо столбцышто (4-5 ий):" 
+                      : lang === "sah" 
+                        ? "Үһүс графаҕа (4-5 сыл):" 
+                        : lang === "tyv" 
+                          ? "Үшкү бажыңга (4-5 чыл):" 
+                          : "В третьем столбце (4-5 лет):"}
                 </strong>{" "}
                 {lang === "en"
                   ? "Based on your values and career balance, write what career goals you aspire to achieve in 5 years and what is important to you in your work."
-                  : "основываясь на ваших ценностях и балансе карьеры, напишите, к каким карьерным целям вы стремитесь через 5 лет, что для вас важно в вашей работе."}
+                  : lang === "chm"
+                    ? "шке лышташ да баланс негызеш, 5 ий гыч могай цельлан кумыл пашам ыштеда, возыза."
+                    : lang === "sah"
+                      ? "бэйэҕит сыаннастаргытыгар олоҕуран, 5 сылынан туохха тиийэргитин уонна үлэҕитигэр туох суолталааҕын суруйуҥ."
+                      : lang === "tyv"
+                        ? "бодуңарның үнелелдериңерге удуртур, 5 чыл болгаш кандыг сорулгаларга чедип алыксаарыңарны бижиңер."
+                        : "основываясь на ваших ценностях и балансе карьеры, напишите, к каким карьерным целям вы стремитесь через 5 лет, что для вас важно в вашей работе."}
               </li>
             </ul>
           </div>
@@ -546,21 +650,53 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
               <th className="py-3 px-4 w-[28%] rounded-tl-xl border-r border-white/5">
                 <div className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded bg-[#C5A059]/20 text-[#C5A059] font-mono text-[10px]">1</span>
-                  <span>{lang === "en" ? "Today - Point A" : "Сегодня — Пункт А"}</span>
+                  <span>
+                    {lang === "en" 
+                      ? "Today - Point A" 
+                      : lang === "chm" 
+                        ? "Таче — Пункт А" 
+                        : lang === "sah" 
+                          ? "Билиҥҥэ — А пуун" 
+                          : lang === "tyv" 
+                            ? "Бөгүн — А чук" 
+                            : "Сегодня — Пункт А"}
+                  </span>
                 </div>
               </th>
               <th className="py-3 px-4 w-[28%] border-r border-white/5">
                 <div className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded bg-white/10 text-white/50 font-mono text-[10px]">2</span>
-                  <span>{lang === "en" ? "2–3 Years" : "2–3 года"}</span>
-                  <span className="text-[10px] text-white/30 lowercase font-normal">({lang === "en" ? "empty" : "пусто"})</span>
+                  <span>
+                    {lang === "en" 
+                      ? "2–3 Years" 
+                      : lang === "chm" 
+                        ? "2–3 ий" 
+                        : lang === "sah" 
+                          ? "2–3 сыл" 
+                          : lang === "tyv" 
+                            ? "2–3 чыл" 
+                            : "2–3 года"}
+                  </span>
+                  <span className="text-[10px] text-white/30 lowercase font-normal">
+                    ({lang === "en" ? "empty" : lang === "chm" ? "яра" : lang === "sah" ? "кураанах" : lang === "tyv" ? "куруг" : "пусто"})
+                  </span>
                 </div>
               </th>
               <th className="py-3 px-4 w-[38%] rounded-tr-xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-5 w-5 items-center justify-center rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px]">3</span>
-                    <span className="text-emerald-400">{lang === "en" ? "4–5 Years (Goals)" : "4–5 лет (Цели)"}</span>
+                    <span className="text-emerald-400">
+                      {lang === "en" 
+                        ? "4–5 Years (Goals)" 
+                        : lang === "chm" 
+                          ? "4–5 ий (Цель-влак)" 
+                          : lang === "sah" 
+                            ? "4–5 сыл (Сыаллар)" 
+                            : lang === "tyv" 
+                              ? "4–5 чыл (Сорулгалар)" 
+                              : "4–5 лет (Цели)"}
+                    </span>
                   </div>
                   <Sparkles className="h-3.5 w-3.5 text-emerald-400 opacity-60" />
                 </div>
@@ -591,7 +727,17 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                   <textarea
                     value={row.pointA}
                     onChange={(e) => handleUpdateRow(row.id, "pointA", e.target.value)}
-                    placeholder={lang === "en" ? "Describe your current state today..." : "Опишите ваш текущий статус сегодня..."}
+                    placeholder={
+                      lang === "en"
+                        ? "Describe your current career status, role, income, and balance today..."
+                        : lang === "chm"
+                          ? "Таче кызытсе карьер статусым, верым, доходатым сӱретлыза..."
+                          : lang === "sah"
+                            ? "Билиҥҥи карьера туругун, дуоһунаһы, доходу уонна тэҥнэһиги суруйуҥ..."
+                            : lang === "tyv"
+                              ? "Амгы карьер байдалыңарны, хүлээлгеңерни, орулгаңарны бижиңер..."
+                              : "Опишите ваш текущий статус сегодня: ваша роль, должность, уровень дохода..."
+                    }
                     rows={4}
                     className={`w-full rounded-lg border p-2.5 text-xs outline-none transition focus:border-[#C5A059]/40 resize-y ${
                       isDark 
@@ -604,12 +750,30 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                 {/* Column 2: 2-3 Years (Left empty by default as requested) */}
                 <td className={`p-3 align-top border-r ${isDark ? "border-white/5" : "border-zinc-150"}`}>
                   <div className="mb-2 text-[10px] uppercase font-bold text-white/30 tracking-wider">
-                    {lang === "en" ? "Medium term" : "Среднесрочный"}
+                    {lang === "en" 
+                      ? "Medium term" 
+                      : lang === "chm" 
+                        ? "Кычык кужым" 
+                        : lang === "sah" 
+                          ? "Орто мөһөл" 
+                          : lang === "tyv" 
+                            ? "Ортаа хевири" 
+                            : "Среднесрочный"}
                   </div>
                   <textarea
                     value={row.mediumTerm}
                     onChange={(e) => handleUpdateRow(row.id, "mediumTerm", e.target.value)}
-                    placeholder={lang === "en" ? "(Leave empty for now)" : "(Пока оставьте пустым)"}
+                    placeholder={
+                      lang === "en" 
+                        ? "(Leave empty for now)" 
+                        : lang === "chm" 
+                          ? "(Кызытлан яра кодыза)" 
+                          : lang === "sah" 
+                            ? "(Кураанах хаалларыҥ)" 
+                            : lang === "tyv" 
+                              ? "(Амдыгаагар куруг арттырыңар)" 
+                              : "(Пока оставьте пустым)"
+                    }
                     rows={4}
                     className={`w-full rounded-lg border p-2.5 text-xs outline-none transition focus:border-[#C5A059]/40 resize-y ${
                       isDark 
@@ -622,12 +786,32 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                 {/* Column 3: 4-5 Years Goals */}
                 <td className="p-3 align-top">
                   <div className="mb-2 flex items-center justify-between text-[10px] uppercase font-bold text-emerald-400/80 tracking-wider">
-                    <span>{lang === "en" ? "5-Year Goals & Values" : "Цели и ценности через 5 лет"}</span>
+                    <span>
+                      {lang === "en" 
+                        ? "5-Year Goals & Values" 
+                        : lang === "chm" 
+                          ? "5 ий гыч цель да лышташ" 
+                          : lang === "sah" 
+                            ? "5 сыллаах сыаллар уонна суолталар" 
+                            : lang === "tyv" 
+                              ? "5 чыл сорулгалары да үнелелдери" 
+                              : "Цели и ценности через 5 лет"}
+                    </span>
                   </div>
                   <textarea
                     value={row.longTerm}
                     onChange={(e) => handleUpdateRow(row.id, "longTerm", e.target.value)}
-                    placeholder={lang === "en" ? "Describe your 5-year target goals and core work values..." : "Опишите к каким карьерным целям вы стремитесь через 5 лет..."}
+                    placeholder={
+                      lang === "en"
+                        ? "Describe your 5-year target career goals and core work values..."
+                        : lang === "chm"
+                          ? "5 ий гыч могай целевой вер да паша лышташлан кумылым возыза..."
+                          : lang === "sah"
+                            ? "5 сылынан туох анал сыалга тиийэргитин уонна суолталааҕын суруйуҥ..."
+                            : lang === "tyv"
+                              ? "5 чыл болгаш кандыг сорулгаларга чедип алыксаарыңарны бижиңер..."
+                              : "Опишите, к каким карьерным целям вы стремитесь через 5 лет, что для вас важно в вашей работе..."
+                    }
                     rows={4}
                     className={`w-full rounded-lg border p-2.5 text-xs outline-none transition focus:border-emerald-500/40 resize-y ${
                       isDark 
@@ -644,7 +828,17 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                     className={`rounded p-1.5 transition cursor-pointer ${
                       isDark ? "text-white/30 hover:bg-rose-500/10 hover:text-rose-400" : "text-zinc-400 hover:bg-rose-500/10 hover:text-rose-500"
                     }`}
-                    title={lang === "en" ? "Delete row" : "Удалить строку"}
+                    title={
+                      lang === "en" 
+                        ? "Delete row" 
+                        : lang === "chm" 
+                          ? "Строкам корандаш" 
+                          : lang === "sah" 
+                            ? "Осуоланы сотор" 
+                            : lang === "tyv" 
+                              ? "Одуругну кааптар" 
+                              : "Удалить строку"
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -663,14 +857,32 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
           <label className={`block text-xs font-semibold uppercase tracking-wider mb-2 ${
             isDark ? "text-[#DFC182]" : "text-[#8C6D32]"
           }`}>
-            {lang === "en" ? "New Goal Category Title:" : "Название новой категории целей:"}
+            {lang === "en" 
+              ? "New Goal Category Title:" 
+              : lang === "chm" 
+                ? "У цель категорий лӱм:" 
+                : lang === "sah" 
+                  ? "Саҥа сыал категориятын аата:" 
+                  : lang === "tyv" 
+                    ? "Чаа сорулга категориязының ады:" 
+                    : "Название новой категории целей:"}
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              placeholder={lang === "en" ? "e.g., International mobility / Work-life..." : "Например: Международная мобильность / Команда..."}
+              placeholder={
+                lang === "en" 
+                  ? "e.g., International mobility / Team leadership..." 
+                  : lang === "chm" 
+                    ? "Мутлан: Калыккокласе паша / Команда..." 
+                    : lang === "sah" 
+                      ? "Анал холобур: Норуоттар икки ардыларынааҕы хамсааһын..." 
+                      : lang === "tyv" 
+                        ? "Байдал: Делегей чергелиг ажыл / Команда..." 
+                        : "Например: Международная мобильность / Команда..."
+              }
               className={`flex-1 rounded-xl border px-3 py-2 text-xs outline-none ${
                 isDark 
                   ? "border-white/10 bg-[#0A0A0B] text-white focus:border-[#C5A059]" 
@@ -682,7 +894,15 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                 onClick={handleAddCategory}
                 className="rounded-xl bg-[#C5A059] px-4 py-2 text-xs font-bold text-[#0A0A0B] hover:bg-[#DFC182] active:scale-95 transition cursor-pointer"
               >
-                {lang === "en" ? "Add" : "Добавить"}
+                {lang === "en" 
+                  ? "Add" 
+                  : lang === "chm" 
+                    ? "Ешараш" 
+                    : lang === "sah" 
+                      ? "Ууруу" 
+                      : lang === "tyv" 
+                        ? "Немеп алыр" 
+                        : "Добавить"}
               </button>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -690,7 +910,15 @@ export const CareerGoalsTable = forwardRef<CanvasExportHandle, CareerGoalsTableP
                   isDark ? "border-white/10 text-white/50 hover:text-white" : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                 }`}
               >
-                {lang === "en" ? "Cancel" : "Отмена"}
+                {lang === "en" 
+                  ? "Cancel" 
+                  : lang === "chm" 
+                    ? "Чараш" 
+                    : lang === "sah" 
+                      ? "Кэпсииртэн туттунуу" 
+                      : lang === "tyv" 
+                        ? "Соксадыры" 
+                        : "Отмена"}
               </button>
             </div>
           </div>

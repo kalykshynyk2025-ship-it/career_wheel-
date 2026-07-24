@@ -381,8 +381,17 @@ export const TargetWheelCard = forwardRef<CanvasExportHandle, TargetWheelCardPro
     ctx.font = "bold 14px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    const devCreditLabel = lang === "en"
+      ? "Tool Developer"
+      : lang === "chm"
+        ? "Инструментым ямдылыше"
+        : lang === "sah"
+          ? "Тэрили оҥорооччу"
+          : lang === "tyv"
+            ? "Херекселдиң чогаадыкчызы"
+            : "Разработчик инструмента";
     ctx.fillText(
-      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      `${devCreditLabel}: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)`,
       canvas.width / 2,
       canvas.height - 25
     );
@@ -428,12 +437,20 @@ export const TargetWheelCard = forwardRef<CanvasExportHandle, TargetWheelCardPro
                   ? "Карьер кушмо орава (Цель)" 
                   : lang === "sah" 
                     ? "Карьера сайдыытын эргимтэтэ (Сыал)" 
-                    : "Колесо карьерного роста (Цели)"}
+                    : lang === "tyv"
+                      ? "Карьер өзелинин дескинчигежи (Сорулгалар)"
+                      : "Колесо карьерного роста (Цели)"}
             </h3>
             <p className={`text-xs mt-0.5 ${isDark ? "text-white/40" : "text-zinc-500"}`}>
               {lang === "en" 
                 ? "Visualized target growth points contrasted with current status" 
-                : "Визуализированные целевые точки роста в сопоставлении с текущим состоянием"}
+                : lang === "chm"
+                  ? "Кызытсе состояний дене таҥастарыме вияҥме целевой вер-влак"
+                  : lang === "sah"
+                    ? "Билиҥҥи турукка тэҥнээн көрөн сайдыы сыалын дьэҥкэтик көрдөрүү"
+                    : lang === "tyv"
+                      ? "Амгы байдал-биле деңнеп, визуализациялаан көргүскен өзел сорулгалары"
+                      : "Визуализированные целевые точки роста в сопоставлении с текущим состоянием"}
             </p>
           </div>
         </div>

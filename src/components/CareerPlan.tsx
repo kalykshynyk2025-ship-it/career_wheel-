@@ -466,8 +466,17 @@ export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(functi
     ctx.font = "bold 14px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    const devCreditLabel = lang === "en"
+      ? "Tool Developer"
+      : lang === "chm"
+        ? "Инструментым ямдылыше"
+        : lang === "sah"
+          ? "Тэрили оҥорооччу"
+          : lang === "tyv"
+            ? "Херекселдиң чогаадыкчызы"
+            : "Разработчик инструмента";
     ctx.fillText(
-      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      `${devCreditLabel}: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)`,
       canvas.width / 2,
       canvas.height - 25
     );
@@ -539,7 +548,15 @@ export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(functi
             <div className="flex items-center justify-between mb-2">
               <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? "text-white/40" : "text-zinc-400"}`}>
                 <Sparkles className="h-3.5 w-3.5 text-[#C5A059] inline mr-1.5 align-text-bottom" />
-                {lang === "en" ? "Interactive Planner & Generator" : "Интерактивный конструктор и Генератор шагов"}
+                {lang === "en" 
+                  ? "Interactive Planner & Step Generator" 
+                  : lang === "chm" 
+                    ? "Интерактивный конструктор да Ошкыл генератор" 
+                    : lang === "sah" 
+                      ? "Интерактивнай оҥорооччу уонна Хааммыт генератора" 
+                      : lang === "tyv" 
+                        ? "Интерактивтыг тудугжу да Базымнар генератору" 
+                        : "Интерактивный конструктор и Генератор шагов"}
               </span>
             </div>
 
@@ -584,11 +601,11 @@ export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(functi
                             <span className={`text-[10px] font-medium font-mono border px-1.5 py-0.25 rounded ${
                               isDark ? "bg-white/5 border-white/10 text-white/50" : "bg-zinc-100 border-zinc-200 text-zinc-500"
                             }`}>
-                              {lang === "en" ? "now" : "сейчас"}: {crit.score}
+                              {lang === "en" ? "now" : lang === "chm" ? "кызыт" : lang === "sah" ? "билиҥҥэ" : lang === "tyv" ? "амгы" : "сейчас"}: {crit.score}
                             </span>
                             <ArrowRight className={`h-3 w-3 ${isDark ? "text-white/20" : "text-zinc-350"}`} />
                             <span className="text-[10px] font-bold font-mono text-[#C5A059] border border-[#C5A059]/30 bg-[#C5A059]/5 px-1.5 py-0.25 rounded">
-                              {lang === "en" ? "target" : "цель"}: {targetVal}
+                              {lang === "en" ? "target" : lang === "chm" ? "цель" : lang === "sah" ? "сыал" : lang === "tyv" ? "сорулга" : "цель"}: {targetVal}
                             </span>
                             <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.25 rounded border text-center whitespace-normal leading-tight ${strategy.colorClass}`}>
                               {strategy.text}
@@ -643,7 +660,17 @@ export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(functi
                                 type="button"
                                 onClick={() => handleAutoGenerate(crit)}
                                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#C5A059]/10 border border-[#C5A059]/30 text-[#DFC182] px-3.5 py-1.5 text-xs font-bold hover:bg-[#C5A059]/20 hover:text-white transition cursor-pointer active:scale-95 shrink-0"
-                                title={lang === "en" ? "Generate Steps" : "Заполнить шаги автоматически по шаблону коучинга"}
+                                title={
+                                  lang === "en" 
+                                    ? "Generate steps automatically" 
+                                    : lang === "chm" 
+                                      ? "Ошкыл-влакым автоматически темаш" 
+                                      : lang === "sah" 
+                                        ? "Хааммыттары бэйэтэ толорор" 
+                                        : lang === "tyv" 
+                                          ? "Базымнарны автоматиктиг долдурар" 
+                                          : "Заполнить шаги автоматически по шаблону коучинга"
+                                }
                               >
                                 <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" />
                                 {t.careerPlanAutoGen}
@@ -661,13 +688,31 @@ export const CareerPlan = forwardRef<CanvasExportHandle, CareerPlanProps>(functi
 
                               <div className="grid grid-cols-1 gap-2.5">
                                 {[0, 1, 2, 3].map((stepIdx) => {
+                                  const stepNum = stepIdx + 1;
                                   const placeholder = lang === "en" 
-                                    ? `Step ${stepIdx + 1}. Specific action to take...`
-                                    : `Шаг ${stepIdx + 1}. Опишите конкретное действие...`;
+                                    ? `Step ${stepNum}. Describe specific action to take...`
+                                    : lang === "chm"
+                                      ? `${stepNum} ошкыл. Налме конкретный паша верым возыза...`
+                                      : lang === "sah"
+                                        ? `${stepNum} хааммыт. Чочуллубут конкретнай дьайыыны суруйуҥ...`
+                                        : lang === "tyv"
+                                          ? `${stepNum} базым. Тодаргай ажыл-херекти бижиңер...`
+                                          : `Шаг ${stepNum}. Опишите конкретное действие...`;
+
+                                  const stepLabel = lang === "en" 
+                                    ? `Step ${stepNum}` 
+                                    : lang === "chm"
+                                      ? `${stepNum} ошкыл`
+                                      : lang === "sah"
+                                        ? `${stepNum} хааммыт`
+                                        : lang === "tyv"
+                                          ? `${stepNum} базым`
+                                          : `Шаг ${stepNum}`;
+
                                   return (
                                     <div key={stepIdx} className="flex gap-2 items-center">
-                                      <span className={`text-xs font-mono font-bold w-12 text-right shrink-0 ${isDark ? "text-[#DFC182]/50" : "text-[#8C6D32]/60"}`}>
-                                        {lang === "en" ? `Step ${stepIdx + 1}` : `Шаг ${stepIdx + 1}`}
+                                      <span className={`text-xs font-mono font-bold w-16 text-right shrink-0 ${isDark ? "text-[#DFC182]/50" : "text-[#8C6D32]/60"}`}>
+                                        {stepLabel}
                                       </span>
                                       <input
                                         type="text"

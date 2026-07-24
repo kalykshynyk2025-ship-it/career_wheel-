@@ -760,8 +760,17 @@ export const WheelChart = forwardRef<CanvasExportHandle, WheelChartProps>(functi
     ctx.font = "bold 14px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    const devCreditLabel = lang === "en"
+      ? "Tool Developer"
+      : lang === "chm"
+        ? "Инструментым ямдылыше"
+        : lang === "sah"
+          ? "Тэрили оҥорооччу"
+          : lang === "tyv"
+            ? "Херекселдиң чогаадыкчызы"
+            : "Разработчик инструмента";
     ctx.fillText(
-      "Разработчик инструмента: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)",
+      `${devCreditLabel}: КАЛЫК ШЫНЫК • WEB STUDIO & GAMIFICATION (https://kalyk-shynyk-web-studio.vercel.app/)`,
       canvas.width / 2,
       canvas.height - 25
     );

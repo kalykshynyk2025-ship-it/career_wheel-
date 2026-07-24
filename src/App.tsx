@@ -908,8 +908,8 @@ export default function App() {
                     <Download className="h-5 w-5" />
                     <span>
                       {isExportingFull
-                        ? (lang === "en" ? "Exporting..." : "Экспорт выполняется...")
-                        : (lang === "en" ? "Export All Blocks in One Document (PDF)" : "Экспортировать все блоки одним документом (PDF)")}
+                        ? (lang === "en" ? "Exporting..." : lang === "chm" ? "Экспорт кая..." : lang === "sah" ? "Таһаарылла турар..." : lang === "tyv" ? "Экспорттап турар..." : "Экспорт выполняется...")
+                        : (lang === "en" ? "Export All Blocks in One Document (PDF)" : lang === "chm" ? "Чыла блокым ик документ дене экспортиртен (PDF)" : lang === "sah" ? "Бүлүүх блоктары биир докумуонунан экспорттааһын (PDF)" : lang === "tyv" ? "Бүгү блокторну чаңгыс документиге экспортиртир (PDF)" : "Экспортировать все блоки одним документом (PDF)")}
                     </span>
                   </button>
                 </div>
@@ -946,7 +946,15 @@ export default function App() {
               isDark ? "border-white/5" : "border-zinc-200"
             }`}>
               <span className={`text-[10px] uppercase tracking-widest font-semibold ${isDark ? "text-white/40" : "text-zinc-400"}`}>
-                {lang === "en" ? "Created by" : "Разработчик инструмента"}
+                {lang === "en" 
+                  ? "Tool Developer" 
+                  : lang === "chm" 
+                    ? "Инструментым ямдылыше" 
+                    : lang === "sah" 
+                      ? "Тэрили оҥорооччу" 
+                      : lang === "tyv" 
+                        ? "Херекселдиң чогаадыкчызы" 
+                        : "Разработчик инструмента"}
               </span>
               <a
                 href="https://kalyk-shynyk-web-studio.vercel.app/"
